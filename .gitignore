@@ -65,4 +65,4 @@ third_party/icu
 tools/gyp
 tools/json_schema_compiler/test/json_schema_compiler_tests.xml
 xcodebuild
-xwalk
+/extensions
