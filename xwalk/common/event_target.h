@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef REALSENSE_COMMON_EVENT_TARGET_H_
-#define REALSENSE_COMMON_EVENT_TARGET_H_
+#ifndef XWALK_COMMON_EVENT_TARGET_H_
+#define XWALK_COMMON_EVENT_TARGET_H_
 
 #include <map>
 #include <string>
-#include "realsense/common/binding_object.h"
+#include "xwalk/common/binding_object.h"
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 // The EventTarget class is the native implementation of the W3C standard
@@ -48,6 +48,6 @@ class EventTarget : public BindingObject {
 };
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk
 
-#endif  // REALSENSE_COMMON_EVENT_TARGET_H_
+#endif  // XWALK_COMMON_EVENT_TARGET_H_

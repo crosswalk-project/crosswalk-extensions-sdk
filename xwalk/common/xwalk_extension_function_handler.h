@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef REALSENSE_COMMON_XWALK_EXTENSION_FUNCTION_HANDLER_H_
-#define REALSENSE_COMMON_XWALK_EXTENSION_FUNCTION_HANDLER_H_
+#ifndef XWALK_COMMON_XWALK_EXTENSION_FUNCTION_HANDLER_H_
+#define XWALK_COMMON_XWALK_EXTENSION_FUNCTION_HANDLER_H_
 
 #include <map>
 #include <string>
@@ -11,9 +11,9 @@
 #include "base/memory/weak_ptr.h"
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/values.h"
-#include "realsense/common/extension.h"
+#include "xwalk/common/extension.h"
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 // This struct is passed to the function handler, usually assigned to the
@@ -120,6 +120,6 @@ class XWalkExtensionFunctionHandler {
 };
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk
 
-#endif  // REALSENSE_COMMON_XWALK_EXTENSION_FUNCTION_HANDLER_H_
+#endif  // XWALK_COMMON_XWALK_EXTENSION_FUNCTION_HANDLER_H_

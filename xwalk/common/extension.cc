@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "realsense/common/extension.h"
+#include "xwalk/common/extension.h"
 
 #include <assert.h>
 #include <iostream>
@@ -10,7 +10,7 @@
 
 namespace {
 
-realsense::common::Extension* g_extension = NULL;
+xwalk::common::Extension* g_extension = NULL;
 XW_Extension g_xw_extension = 0;
 
 const XW_CoreInterface* g_core = NULL;
@@ -85,7 +85,7 @@ int32_t XW_Initialize(XW_Extension extension, XW_GetInterface get_interface) {
     return XW_ERROR;
   }
 
-  using realsense::common::Extension;
+  using xwalk::common::Extension;
   g_core->RegisterShutdownCallback(g_xw_extension, Extension::OnShutdown);
   g_core->RegisterInstanceCallbacks(
       g_xw_extension, Extension::OnInstanceCreated,
@@ -95,7 +95,7 @@ int32_t XW_Initialize(XW_Extension extension, XW_GetInterface get_interface) {
   return XW_OK;
 }
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 Extension::Extension() {}
@@ -211,4 +211,4 @@ void Instance::SendSyncReply(const char* reply) {
 }
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef REALSENSE_COMMON_EXTENSION_H_
-#define REALSENSE_COMMON_EXTENSION_H_
+#ifndef XWALK_COMMON_EXTENSION_H_
+#define XWALK_COMMON_EXTENSION_H_
 
 // This is a C++ wrapper over Crosswalk Extension C API. It implements once the
 // boilerplate for the common case of mapping XW_Extension and XW_Instance to
@@ -20,26 +20,26 @@
 
 #include <string>
 
-#include "realsense/common/XW_Extension.h"
-#include "realsense/common/XW_Extension_EntryPoints.h"
-#include "realsense/common/XW_Extension_Permissions.h"
-#include "realsense/common/XW_Extension_Runtime.h"
-#include "realsense/common/XW_Extension_SyncMessage.h"
+#include "xwalk/common/XW_Extension.h"
+#include "xwalk/common/XW_Extension_EntryPoints.h"
+#include "xwalk/common/XW_Extension_Permissions.h"
+#include "xwalk/common/XW_Extension_Runtime.h"
+#include "xwalk/common/XW_Extension_SyncMessage.h"
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 class Instance;
 class Extension;
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk
 
 // This function should be implemented by each extension and should return
 // an appropriate Extension subclass.
-realsense::common::Extension* CreateExtension();
+xwalk::common::Extension* CreateExtension();
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 #ifdef PostMessage
@@ -93,6 +93,6 @@ class Instance {
 };
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk
 
-#endif  // REALSENSE_COMMON_EXTENSION_H_
+#endif  // XWALK_COMMON_EXTENSION_H_

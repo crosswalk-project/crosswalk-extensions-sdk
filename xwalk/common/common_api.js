@@ -183,7 +183,7 @@ var Common = function() {
 
   // This class implements the W3C EventTarget interface and also offers
   // convenience methods for declaring events. The native implementation class is
-  // expected to inherit from realsense::common::EventTarget.
+  // expected to inherit from xwalk::common::EventTarget.
   //
   // The following interface will be always publicly available for every object
   // using this prototype and they behave just like the specified:
