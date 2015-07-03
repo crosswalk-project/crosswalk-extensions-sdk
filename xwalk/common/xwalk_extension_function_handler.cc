@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "realsense/common/xwalk_extension_function_handler.h"
+#include "xwalk/common/xwalk_extension_function_handler.h"
 
 #include "base/location.h"
 #include "base/json/json_string_value_serializer.h"
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 XWalkExtensionFunctionInfo::XWalkExtensionFunctionInfo(
@@ -125,4 +125,4 @@ void XWalkExtensionFunctionHandler::PostMessageToInstance(
 }
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk

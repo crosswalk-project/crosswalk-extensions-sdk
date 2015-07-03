@@ -12,6 +12,7 @@
         'xwalk_idlgen.gypi',
       ],
       'variables': {
+        'jsapi_namespace': 'xwalk::jsapi',
         'jsapi_component': 'common',
       },
       'include_dirs': [

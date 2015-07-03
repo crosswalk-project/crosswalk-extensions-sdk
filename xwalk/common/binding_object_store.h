@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef REALSENSE_COMMON_BINDING_OBJECT_STORE_H_
-#define REALSENSE_COMMON_BINDING_OBJECT_STORE_H_
+#ifndef XWALK_COMMON_BINDING_OBJECT_STORE_H_
+#define XWALK_COMMON_BINDING_OBJECT_STORE_H_
 
 #include <map>
 #include <string>
 #include "base/memory/scoped_ptr.h"
 #include "base/stl_util.h"
-#include "realsense/common/xwalk_extension_function_handler.h"
-#include "realsense/common/binding_object.h"
+#include "xwalk/common/xwalk_extension_function_handler.h"
+#include "xwalk/common/binding_object.h"
 
-namespace realsense {
+namespace xwalk {
 namespace common {
 
 // This class acts likes a container of objects that have a counterpart in
@@ -39,6 +39,6 @@ class BindingObjectStore {
 };
 
 }  // namespace common
-}  // namespace realsense
+}  // namespace xwalk
 
-#endif  // REALSENSE_COMMON_BINDING_OBJECT_STORE_H_
+#endif  // XWALK_COMMON_BINDING_OBJECT_STORE_H_

@@ -7,8 +7,8 @@
   'variables': {
     'api_gen_dir': '<(DEPTH)/tools/json_schema_compiler',
     'api_gen': '<(api_gen_dir)/compiler.py',
-    'root_namespace': 'realsense::jsapi::%(namespace)s',
-    'jsapi_component%': '',
+    'dest_dir': '<(SHARED_INTERMEDIATE_DIR)/xwlak/<(jsapi_component)',
+    'root_namespace': '<(jsapi_namespace)::%(namespace)s',
   },
   'rules': [
     {
@@ -30,15 +30,15 @@
         '<(api_gen_dir)/util_cc_helper.py',
       ],
       'outputs': [
-        '<(SHARED_INTERMEDIATE_DIR)/realsense/<(jsapi_component)/<(RULE_INPUT_DIRNAME)/<(RULE_INPUT_ROOT).cc',
-        '<(SHARED_INTERMEDIATE_DIR)/realsense/<(jsapi_component)/<(RULE_INPUT_DIRNAME)/<(RULE_INPUT_ROOT).h',
+        '<(dest_dir)/<(RULE_INPUT_DIRNAME)/<(RULE_INPUT_ROOT).cc',
+        '<(dest_dir)/<(RULE_INPUT_DIRNAME)/<(RULE_INPUT_ROOT).h',
       ],
       'action': [
         'python',
         '<(api_gen)',
         '<(RULE_INPUT_PATH)',
         '--root=.',
-        '--destdir=<(SHARED_INTERMEDIATE_DIR)/realsense/<(jsapi_component)',
+        '--destdir=<(dest_dir)',
         '--namespace=<(root_namespace)',
         '--generator=cpp',
       ],
@@ -47,17 +47,11 @@
     },
   ],
   'include_dirs': [
-    '<(SHARED_INTERMEDIATE_DIR)',
-    '<(SHARED_INTERMEDIATE_DIR)/realsense/<(jsapi_component)',
+    '<(dest_dir)',
     '<(DEPTH)',
   ],
   'dependencies':[
     '<(DEPTH)/tools/json_schema_compiler/api_gen_util.gyp:api_gen_util',
   ],
-  'direct_dependent_settings': {
-    'include_dirs': [
-      '<(SHARED_INTERMEDIATE_DIR)',
-    ]
-  },
   'hard_dependency': 1,
 }
