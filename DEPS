@@ -45,6 +45,19 @@ hooks = [
                 '-s', 'src/buildtools/linux64/gn.sha1',
     ],
   },
+  {
+    # Update the Windows toolchain if necessary.
+    'name': 'win_toolchain',
+    'pattern': '.',
+    'action': ['python', 'src/build/vs_toolchain.py', 'update'],
+  },
+  {
+    # Pull clang if needed or requested via GYP_DEFINES.
+    # Note: On Win, this should run after win_toolchain, as it may use it.
+    'name': 'clang',
+    'pattern': '.',
+    'action': ['python', 'src/tools/clang/scripts/update.py', '--if-needed'],
+  },
   # TODO: Switch to GN later.
   {
     "name": "gyp_all",
