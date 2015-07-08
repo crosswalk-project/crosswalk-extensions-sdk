@@ -7,7 +7,7 @@
   'variables': {
     'api_gen_dir': '<(DEPTH)/tools/json_schema_compiler',
     'api_gen': '<(api_gen_dir)/compiler.py',
-    'dest_dir': '<(SHARED_INTERMEDIATE_DIR)/xwlak/<(jsapi_component)',
+    'dest_dir': '<(SHARED_INTERMEDIATE_DIR)/xwalk/<(jsapi_component)',
     'root_namespace': '<(jsapi_namespace)::%(namespace)s',
   },
   'rules': [
