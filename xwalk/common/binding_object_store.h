@@ -25,6 +25,7 @@ class BindingObjectStore {
   virtual ~BindingObjectStore();
 
   void AddBindingObject(const std::string& id, scoped_ptr<BindingObject> obj);
+  BindingObject* GetBindingObjectById(const std::string& id);
   bool HasObjectForTesting(const std::string& id) const;
 
  private:

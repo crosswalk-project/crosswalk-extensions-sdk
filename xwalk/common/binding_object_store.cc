@@ -35,6 +35,13 @@ void BindingObjectStore::AddBindingObject(const std::string& id,
   objects_[id] = obj.release();
 }
 
+BindingObject* BindingObjectStore::GetBindingObjectById(const std::string& id) {
+  BindingObjectMap::iterator it = objects_.find(id);
+  if (it == objects_.end())
+    return nullptr;
+  return it->second;
+}
+
 bool BindingObjectStore::HasObjectForTesting(const std::string& id) const {
   return ContainsKey(objects_, id);
 }
