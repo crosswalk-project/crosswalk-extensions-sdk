@@ -67,12 +67,16 @@ var Common = function() {
     return (unique_id++).toString();
   }
 
-  function wrapPromiseAsCallback(promise) {
+  function wrapPromiseAsCallback(promise, wrapReturns) {
     return function(data, error) {
-      if (error)
+      if (error) {
         promise.reject(error);
-      else
-        promise.fulfill(data);
+      } else {
+        if (wrapReturns)
+          promise.fulfill(wrapReturns(data));
+        else
+          promise.fulfill(data);
+      }
     };
   };
 
@@ -102,12 +106,13 @@ var Common = function() {
   //     define as not enumerable by default. Set |has_callback| to true if the
   //     method expects a callback as the last parameter.
   //
-  // _addMethodWithPromise(name, promise):
+  // _addMethodWithPromise(name, promise, wrapArgs?, wrapReturns?):
   //     Convenience function for adding methods that return a Promise. The reply
-  //     from the native side is expected to have two parameters: |data| and
-  //     |error|. If the |data| parameter is not empty, it will trigger a
-  //     |reject()| and be passed as parameter to it, otherwise we |fullfill()|
-  //     is invoked with |data|.
+  //     from the native side is expected to have two parameters: |data| and |error|.
+  //     The optional wrapArgs, if supplied, will be used to custom the arguments,
+  //     if not supplied, the original arguments will be used.
+  //     The optional wrapReturns, if supplied, will be used to custom |data| value,
+  //     if not supplied, the original |data| value will be used.
   //
 
   var BindingObjectPrototype = function() {
@@ -135,12 +140,14 @@ var Common = function() {
       });
     };
 
-    function addMethodWithPromise(name, Promise) {
+    function addMethodWithPromise(name, Promise, wrapArgs, wrapReturns) {
       Object.defineProperty(this, name, {
         value: function() {
           var promise_instance = new Promise();
           var args = Array.prototype.slice.call(arguments);
-          this._postMessage(name, args, wrapPromiseAsCallback(promise_instance));
+          if (wrapArgs)
+            args = wrapArgs(args);
+          this._postMessage(name, args, wrapPromiseAsCallback(promise_instance, wrapReturns));
           return promise_instance;
         },
         enumerable: isEnumerable(name),
