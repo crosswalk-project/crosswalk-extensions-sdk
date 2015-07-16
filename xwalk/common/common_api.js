@@ -17,7 +17,7 @@ function wrapCallback(args, callback) {
     // the arguments. If there is no callback, an empty string is
     // should be used. This will be sorted out by the InternalInstance
     // message handler.
-    args.unshift("");
+    args.unshift('');
   }
 
   return id;
@@ -109,14 +109,15 @@ var Common = function() {
   //     |reject()| and be passed as parameter to it, otherwise we |fullfill()|
   //     is invoked with |data|.
   //
+
   var BindingObjectPrototype = function() {
     function postMessage(name, args, callback) {
-      return internal.postMessage("postMessageToObject",
+      return internal.postMessage('postMessageToObject',
           [this._id, name, args], callback);
     };
 
     function isEnumerable(method_name) {
-      return name.indexOf("_") != 0;
+      return name.indexOf('_') != 0;
     };
 
     function addMethod(name, has_callback) {
@@ -147,27 +148,27 @@ var Common = function() {
     };
 
     function registerLifecycleTracker() {
-      Object.defineProperty(this, "_tracker", {
+      Object.defineProperty(this, '_tracker', {
         value: v8tools.lifecycleTracker(),
       });
 
       var object_id = this._id;
       this._tracker.destructor = function() {
-        internal.postMessage("JSObjectCollected", [object_id]);
+        internal.postMessage('JSObjectCollected', [object_id]);
       };
     }
 
     Object.defineProperties(this, {
-      "_postMessage" : {
+      '_postMessage' : {
         value: postMessage,
       },
-      "_addMethod" : {
+      '_addMethod' : {
         value: addMethod,
       },
-      "_addMethodWithPromise" : {
+      '_addMethodWithPromise' : {
         value: addMethodWithPromise,
       },
-      "_registerLifecycleTracker" : {
+      '_registerLifecycleTracker' : {
         value: registerLifecycleTracker,
       },
     });
@@ -175,7 +176,7 @@ var Common = function() {
 
   var BindingObject = function(object_id) {
     Object.defineProperties(this, {
-      "_id": {
+      '_id': {
         value: object_id,
       },
     });
@@ -216,23 +217,23 @@ var Common = function() {
     };
 
     function addEvent(type, event) {
-      Object.defineProperty(this, "_on" + type, {
-        writable : true,
+      Object.defineProperty(this, '_on' + type, {
+        writable: true,
       });
 
-      Object.defineProperty(this, "on" + type, {
+      Object.defineProperty(this, 'on' + type, {
         get: function() {
-          return this["_on" + type];
+          return this['_on' + type];
         },
         set: function(listener) {
-          var old_listener = this["_on" + type];
+          var old_listener = this['_on' + type];
           if (old_listener === listener)
             return;
 
           if (old_listener)
             this.removeEventListener(type, old_listener);
 
-          this["_on" + type] = listener;
+          this['_on' + type] = listener;
           this.addEventListener(type, listener);
         },
         enumerable: true,
@@ -276,7 +277,7 @@ var Common = function() {
       if (!(listener instanceof Function))
         return;
 
-      if (!(("on" + type) in this))
+      if (!(('on' + type) in this))
         return;
 
       if (type in this._event_listeners) {
@@ -285,7 +286,7 @@ var Common = function() {
           listeners.push(listener);
       } else {
         this._event_listeners[type] = [listener];
-        var id = this._postMessage("addEventListener",
+        var id = this._postMessage('addEventListener',
             [type], makeCallbackListener(this, type));
         this._callback_listeners_id[type] = id;
       }
@@ -307,43 +308,43 @@ var Common = function() {
         internal.removeCallback(this._callback_listeners_id[type]);
         delete this._event_listeners[type];
         delete this._callback_listeners_id[type];
-        this._postMessage("removeEventListener", [type]);
+        this._postMessage('removeEventListener', [type]);
       } else {
         listeners.splice(index, 1);
       }
     };
 
     Object.defineProperties(this, {
-      "_addEvent" : {
-        value : addEvent,
+      '_addEvent' : {
+        value: addEvent,
       },
-      "_dispatchEventFromExtension" : {
-        value : dispatchEventFromExtension,
+      '_dispatchEventFromExtension' : {
+        value: dispatchEventFromExtension,
       },
-      "addEventListener" : {
-        value : addEventListener,
-        enumerable : true,
+      'addEventListener' : {
+        value: addEventListener,
+        enumerable: true,
       },
-      "removeEventListener" : {
-        value : removeEventListener,
-        enumerable : true,
+      'removeEventListener' : {
+        value: removeEventListener,
+        enumerable: true,
       },
-      "dispatchEvent" : {
-        value : dispatchEvent,
-        enumerable : true,
+      'dispatchEvent' : {
+        value: dispatchEvent,
+        enumerable: true,
       },
     });
   };
 
   var EventTarget = function(object_id) {
     Object.defineProperties(this, {
-      "_event_listeners": {
+      '_event_listeners': {
         value: {},
       },
-      "_callback_listeners_id": {
+      '_callback_listeners_id': {
         value: {},
       },
-      "_event_synthesizers": {
+      '_event_synthesizers': {
         value: {},
       },
     });
