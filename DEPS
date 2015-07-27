@@ -5,6 +5,9 @@ vars = {
 use_relative_paths = True
 
 deps = {
+  'buildtools':
+  Var('chromium_git') + '/chromium/buildtools.git' + '@' + '3b302fef93f7cc58d9b8168466905237484b2772',
+
   'testing/gmock':
   Var('chromium_git') + '/external/googlemock.git' + '@' + '29763965ab52f24565299976b936d1265cb6a271',
 
@@ -19,6 +22,43 @@ deps = {
 }
 
 hooks = [
+  # Pull GN binaries.
+  {
+    'name': 'gn_win',
+    'pattern': '.',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--platform=win32',
+                '--no_auth',
+                '--bucket', 'chromium-gn',
+                '-s', 'src/buildtools/win/gn.exe.sha1',
+    ],
+  },
+  {
+    'name': 'gn_linux64',
+    'pattern': '.',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--platform=linux*',
+                '--no_auth',
+                '--bucket', 'chromium-gn',
+                '-s', 'src/buildtools/linux64/gn.sha1',
+    ],
+  },
+  {
+    # Update the Windows toolchain if necessary.
+    'name': 'win_toolchain',
+    'pattern': '.',
+    'action': ['python', 'src/build/vs_toolchain.py', 'update'],
+  },
+  {
+    # Pull clang if needed or requested via GYP_DEFINES.
+    # Note: On Win, this should run after win_toolchain, as it may use it.
+    'name': 'clang',
+    'pattern': '.',
+    'action': ['python', 'src/tools/clang/scripts/update.py', '--if-needed'],
+  },
+  # TODO: Switch to GN later.
   {
     "name": "gyp_all",
     "pattern": ".",

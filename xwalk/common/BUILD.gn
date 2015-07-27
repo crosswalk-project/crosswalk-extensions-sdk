@@ -1,0 +1,52 @@
+# Copyright (c) 2015 Intel Corporation. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//xwalk/common/xwalk_common.gni")
+
+xwalk_idlgen("common_idl") {
+  namespace = "xwalk::jsapi"
+  sources = [ "common.idl" ]
+  no_hack = true
+}
+
+xwalk_js2c("common_js") {
+  sources = [
+    "common_api.js",
+    "common_promise_api.js",
+  ]
+}
+
+source_set("common_static") {
+  sources = [
+    # TODO: Should add //tools/json_schema_compiler:generated_api_util in deps
+    # instead of add below two files directly.
+    "../../tools/json_schema_compiler/util.cc",
+    "../../tools/json_schema_compiler/util.h",
+    "binding_object.h",
+    "binding_object_store.cc",
+    "binding_object_store.h",
+    "event_target.cc",
+    "event_target.h",
+    "extension.cc",
+    "extension.h",
+    "picojson.h",
+    "utils.h",
+    "XW_Extension.h",
+    "XW_Extension_EntryPoints.h",
+    "XW_Extension_Permissions.h",
+    "XW_Extension_Runtime.h",
+    "XW_Extension_SyncMessage.h",
+    "xwalk_extension_function_handler.cc",
+    "xwalk_extension_function_handler.h",
+  ]
+  deps = [
+    ":common_idl",
+    ":common_js",
+    "//base:base",
+  ]
+  include_dirs = [
+    "../..",
+    "$target_gen_dir",
+  ]
+}
