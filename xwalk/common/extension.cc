@@ -14,7 +14,7 @@ xwalk::common::Extension* g_extension = NULL;
 XW_Extension g_xw_extension = 0;
 
 const XW_CoreInterface* g_core = NULL;
-const XW_MessagingInterface* g_messaging = NULL;
+const XW_MessagingInterface2* g_messaging = NULL;
 const XW_Internal_SyncMessagingInterface* g_sync_messaging = NULL;
 const XW_Internal_EntryPointsInterface* g_entry_points = NULL;
 const XW_Internal_RuntimeInterface* g_runtime = NULL;
@@ -28,8 +28,8 @@ bool InitializeInterfaces(XW_GetInterface get_interface) {
     return false;
   }
 
-  g_messaging = reinterpret_cast<const XW_MessagingInterface*>(
-      get_interface(XW_MESSAGING_INTERFACE));
+  g_messaging = reinterpret_cast<const XW_MessagingInterface2*>(
+      get_interface(XW_MESSAGING_INTERFACE_2));
   if (!g_messaging) {
     std::cerr <<
         "Can't initialize extension: error getting Messaging interface.\n";
@@ -199,6 +199,15 @@ void Instance::PostMessage(const char* msg) {
     return;
   }
   g_messaging->PostMessage(xw_instance_, msg);
+}
+
+void Instance::PostBinaryMessage(const char* msg, const size_t size) {
+  if (!xw_instance_) {
+    std::cerr << "Ignoring PostBinaryMessage() in the constructor or after the "
+              << "instance was destroyed.";
+    return;
+  }
+  g_messaging->PostBinaryMessage(xw_instance_, msg, size);
 }
 
 void Instance::SendSyncReply(const char* reply) {

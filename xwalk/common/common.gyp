@@ -33,6 +33,7 @@
         'utils.h',
         'XW_Extension.h',
         'XW_Extension_EntryPoints.h',
+        'XW_Extension_Message_2.h',
         'XW_Extension_Permissions.h',
         'XW_Extension_Runtime.h',
         'XW_Extension_SyncMessage.h',

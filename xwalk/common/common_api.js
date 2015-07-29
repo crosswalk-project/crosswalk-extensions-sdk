@@ -30,13 +30,24 @@ internal.setupInternalExtension = function(extension_obj) {
   extension_object = extension_obj;
 
   extension_object.setMessageListener(function(msg) {
-    var args = JSON.parse(msg);
-    var id = args.shift();
-    var listener = callback_listeners[id];
+    if (msg instanceof ArrayBuffer) {
+      var int32_array = new Int32Array(msg);
+      var id = int32_array[0];
+      var listener = callback_listeners[id];
 
-    if (listener !== undefined) {
-      if (!listener.apply(null, args))
-        delete callback_listeners[id];
+      if (listener !== undefined) {
+        if (!listener.apply(null, [msg]))
+          delete callback_listeners[id];
+      }
+    } else {
+      var args = JSON.parse(msg);
+      var id = args.shift();
+      var listener = callback_listeners[id];
+
+      if (listener !== undefined) {
+        if (!listener.apply(null, args))
+          delete callback_listeners[id];
+      }
     }
   });
 };

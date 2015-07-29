@@ -22,6 +22,7 @@
 
 #include "xwalk/common/XW_Extension.h"
 #include "xwalk/common/XW_Extension_EntryPoints.h"
+#include "xwalk/common/XW_Extension_Message_2.h"
 #include "xwalk/common/XW_Extension_Permissions.h"
 #include "xwalk/common/XW_Extension_Runtime.h"
 #include "xwalk/common/XW_Extension_SyncMessage.h"
@@ -78,6 +79,7 @@ class Instance {
   virtual ~Instance();
 
   void PostMessage(const char* msg);
+  void PostBinaryMessage(const char* msg, const size_t size);
   void SendSyncReply(const char* reply);
 
   virtual void Initialize() {}
