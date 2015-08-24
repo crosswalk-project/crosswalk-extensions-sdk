@@ -6,6 +6,7 @@
 
 #include "base/location.h"
 #include "base/json/json_string_value_serializer.h"
+#include "base/strings/string_number_conversions.h"
 
 namespace xwalk {
 namespace common {
@@ -118,10 +119,27 @@ void XWalkExtensionFunctionHandler::DispatchResult(
 
 void XWalkExtensionFunctionHandler::PostMessageToInstance(
     scoped_ptr<base::Value> msg) {
-  std::string value;
-  JSONStringValueSerializer serializer(&value);
-  serializer.Serialize(*msg);
-  instance_->PostMessage(value.c_str());
+  base::ListValue* args;
+  if (msg->GetAsList(&args)) {
+    base::BinaryValue* binary;
+    if (args->GetBinary(1, &binary)) {
+      std::string callback_id;
+      if (args->GetString(0, &callback_id)) {
+        int id;
+        if (base::StringToInt(callback_id, &id)) {
+          char* buffer = binary->GetBuffer();
+          size_t size = binary->GetSize();
+          memcpy(buffer, &id, sizeof(int));
+          instance_->PostBinaryMessage(buffer, size);
+        }
+      }
+    } else {
+      std::string value;
+      JSONStringValueSerializer serializer(&value);
+      serializer.Serialize(*msg);
+      instance_->PostMessage(value.c_str());
+    }
+  }
 }
 
 }  // namespace common
