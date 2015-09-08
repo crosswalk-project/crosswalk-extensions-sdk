@@ -19,6 +19,20 @@ deps = {
 
   'tools/gyp':
   Var('chromium_git') + '/external/gyp.git' + '@' + '2889664b9fa88cce175c5c7cdf207d28420a7412',
+
+  'third_party/colorama/src':
+  Var('chromium_git') + '/external/colorama.git' + '@' + '799604a1041e9b3bc5d2789ecbd7e8db2e18e6b8',
+}
+
+deps_os = {
+  'android':
+  {
+    'third_party/android_tools':
+    Var('chromium_git') + '/android_tools.git' + '@' + '1c8df186756bedd686bd293b65065ee6ae321d21',
+
+    'third_party/jsr-305/src':
+    Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
+  }
 }
 
 hooks = [
