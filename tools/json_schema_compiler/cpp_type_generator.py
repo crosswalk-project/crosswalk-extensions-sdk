@@ -163,8 +163,11 @@ class CppTypeGenerator(object):
     for namespace, dependencies in self._NamespaceTypeDependencies().items():
       for dependency in dependencies:
         if dependency.hard or include_soft:
-          c.Append('#include "%s/%s.h"' % (namespace.source_file_dir,
-                                           namespace.unix_name))
+          if namespace.source_file_dir != "":
+            c.Append('#include "%s/%s.h"' % (namespace.source_file_dir,
+                                             namespace.unix_name))
+          else:
+            c.Append('#include "%s.h"' % (namespace.unix_name))
     return c
 
   def _FindType(self, full_name):
