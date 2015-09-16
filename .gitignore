@@ -66,3 +66,6 @@ _out
 /tools/gyp
 /tools/json_schema_compiler/test/json_schema_compiler_tests.xml
 /out*
+/third_party/colorama/src
+/third_party/android_tools
+/third_party/jsr-305/src
