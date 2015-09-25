@@ -78,19 +78,6 @@ var Common = function() {
     return (unique_id++).toString();
   }
 
-  function wrapPromiseAsCallback(promise, wrapReturns) {
-    return function(data, error) {
-      if (error) {
-        promise.reject(error);
-      } else {
-        if (wrapReturns)
-          promise.fulfill(wrapReturns(data));
-        else
-          promise.fulfill(data);
-      }
-    };
-  };
-
   // The BindingObject is responsible for bridging between the JavaScript
   // implementation and the native code. It keeps a unique ID for each
   // instance of a given object that is used by the BindingObjectStore to
@@ -151,15 +138,30 @@ var Common = function() {
       });
     };
 
-    function addMethodWithPromise(name, Promise, wrapArgs, wrapReturns) {
+    function sendMsg(self, name, args, wrapReturns) {
+      return new Promise(function(resolve, reject) {
+        self._postMessage(name, args, function(data, error) {
+          if (error) {
+            reject(error);
+          } else {
+            if (wrapReturns) {
+              resolve(wrapReturns(data));
+            } else {
+              resolve(data);
+            }
+          }
+        });
+      });
+    };
+
+    function addMethodWithPromise(name, wrapArgs, wrapReturns) {
       Object.defineProperty(this, name, {
         value: function() {
-          var promise_instance = new Promise();
           var args = Array.prototype.slice.call(arguments);
           if (wrapArgs)
             args = wrapArgs(args);
-          this._postMessage(name, args, wrapPromiseAsCallback(promise_instance, wrapReturns));
-          return promise_instance;
+
+          return sendMsg(this, name, args, wrapReturns);
         },
         enumerable: isEnumerable(name),
       });

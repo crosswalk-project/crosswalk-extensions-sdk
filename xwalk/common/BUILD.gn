@@ -13,7 +13,6 @@ xwalk_idlgen("common_idl") {
 xwalk_js2c("common_js") {
   sources = [
     "common_api.js",
-    "common_promise_api.js",
   ]
 }
 
