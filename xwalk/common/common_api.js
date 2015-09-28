@@ -112,6 +112,19 @@ var Common = function() {
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
   //
+  // _addMethodWithPromise2(name, promise, wrapArgs?, wrapReturns?):
+  //     The diff with _addMethodWithPromise is that _addMethodWithPromise2's wrapArgs
+  //     will return a Promise type, in which usually have async event to process.
+  //     And _addMethodWithPromise's wrapArgs will return an array type value
+  //     which is a sync function.
+  //     Convenience function for adding methods that return a Promise. The reply
+  //     from the native side is expected to have two parameters: |data| and |error|.
+  //     The optional wrapArgs which will return a Promise,
+  //     if supplied, will be used to custom the arguments,
+  //     if not supplied, the original arguments will be used.
+  //     The optional wrapReturns, if supplied, will be used to custom |data| value,
+  //     if not supplied, the original |data| value will be used.
+  //
 
   var BindingObjectPrototype = function() {
     function postMessage(name, args, callback) {
@@ -167,6 +180,22 @@ var Common = function() {
       });
     };
 
+    function addMethodWithPromise2(name, wrapArgs, wrapReturns) {
+      Object.defineProperty(this, name, {
+        value: function() {
+          var self = this;
+          var args = Array.prototype.slice.call(arguments);
+          if (wrapArgs) {
+            return wrapArgs(args).then(function(resultData) {
+              return sendMsg(self, name, resultData, wrapReturns);
+            });
+          }
+          return sendMsg(self, name, args, wrapReturns);
+        },
+        enumerable: isEnumerable(name),
+      });
+    };
+
     function registerLifecycleTracker() {
       Object.defineProperty(this, '_tracker', {
         value: v8tools.lifecycleTracker(),
@@ -187,6 +216,9 @@ var Common = function() {
       },
       '_addMethodWithPromise' : {
         value: addMethodWithPromise,
+      },
+      '_addMethodWithPromise2': {
+        value: addMethodWithPromise2,
       },
       '_registerLifecycleTracker' : {
         value: registerLifecycleTracker,
