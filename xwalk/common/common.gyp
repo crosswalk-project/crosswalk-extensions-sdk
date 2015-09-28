@@ -24,7 +24,6 @@
         'binding_object_store.h',
         'common.idl',
         'common_api.js',
-        'common_promise_api.js',
         'event_target.cc',
         'event_target.h',
         'extension.cc',

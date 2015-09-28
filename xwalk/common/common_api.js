@@ -78,19 +78,6 @@ var Common = function() {
     return (unique_id++).toString();
   }
 
-  function wrapPromiseAsCallback(promise, wrapReturns) {
-    return function(data, error) {
-      if (error) {
-        promise.reject(error);
-      } else {
-        if (wrapReturns)
-          promise.fulfill(wrapReturns(data));
-        else
-          promise.fulfill(data);
-      }
-    };
-  };
-
   // The BindingObject is responsible for bridging between the JavaScript
   // implementation and the native code. It keeps a unique ID for each
   // instance of a given object that is used by the BindingObjectStore to
@@ -125,6 +112,19 @@ var Common = function() {
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
   //
+  // _addMethodWithPromise2(name, promise, wrapArgs?, wrapReturns?):
+  //     The diff with _addMethodWithPromise is that _addMethodWithPromise2's wrapArgs
+  //     will return a Promise type, in which usually have async event to process.
+  //     And _addMethodWithPromise's wrapArgs will return an array type value
+  //     which is a sync function.
+  //     Convenience function for adding methods that return a Promise. The reply
+  //     from the native side is expected to have two parameters: |data| and |error|.
+  //     The optional wrapArgs which will return a Promise,
+  //     if supplied, will be used to custom the arguments,
+  //     if not supplied, the original arguments will be used.
+  //     The optional wrapReturns, if supplied, will be used to custom |data| value,
+  //     if not supplied, the original |data| value will be used.
+  //
 
   var BindingObjectPrototype = function() {
     function postMessage(name, args, callback) {
@@ -151,15 +151,46 @@ var Common = function() {
       });
     };
 
-    function addMethodWithPromise(name, Promise, wrapArgs, wrapReturns) {
+    function sendMsg(self, name, args, wrapReturns) {
+      return new Promise(function(resolve, reject) {
+        self._postMessage(name, args, function(data, error) {
+          if (error) {
+            reject(error);
+          } else {
+            if (wrapReturns) {
+              resolve(wrapReturns(data));
+            } else {
+              resolve(data);
+            }
+          }
+        });
+      });
+    };
+
+    function addMethodWithPromise(name, wrapArgs, wrapReturns) {
       Object.defineProperty(this, name, {
         value: function() {
-          var promise_instance = new Promise();
           var args = Array.prototype.slice.call(arguments);
           if (wrapArgs)
             args = wrapArgs(args);
-          this._postMessage(name, args, wrapPromiseAsCallback(promise_instance, wrapReturns));
-          return promise_instance;
+
+          return sendMsg(this, name, args, wrapReturns);
+        },
+        enumerable: isEnumerable(name),
+      });
+    };
+
+    function addMethodWithPromise2(name, wrapArgs, wrapReturns) {
+      Object.defineProperty(this, name, {
+        value: function() {
+          var self = this;
+          var args = Array.prototype.slice.call(arguments);
+          if (wrapArgs) {
+            return wrapArgs(args).then(function(resultData) {
+              return sendMsg(self, name, resultData, wrapReturns);
+            });
+          }
+          return sendMsg(self, name, args, wrapReturns);
         },
         enumerable: isEnumerable(name),
       });
@@ -185,6 +216,9 @@ var Common = function() {
       },
       '_addMethodWithPromise' : {
         value: addMethodWithPromise,
+      },
+      '_addMethodWithPromise2': {
+        value: addMethodWithPromise2,
       },
       '_registerLifecycleTracker' : {
         value: registerLifecycleTracker,
