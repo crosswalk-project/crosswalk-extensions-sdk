@@ -31,7 +31,7 @@ internal.setupInternalExtension = function(extension_obj) {
 
   extension_object.setMessageListener(function(msg) {
     if (msg instanceof ArrayBuffer) {
-      var int32_array = new Int32Array(msg, 0 , 4);
+      var int32_array = new Int32Array(msg, 0 , 1);
       var id = int32_array[0];
       var listener = callback_listeners[id];
 
