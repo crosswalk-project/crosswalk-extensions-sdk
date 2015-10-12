@@ -11,6 +11,14 @@
 namespace xwalk {
 namespace common {
 
+namespace {
+
+int AlignedWith4Bytes(int length) {
+  return length + (4 - length % 4);
+}
+
+}  // namespece
+
 XWalkExtensionFunctionInfo::XWalkExtensionFunctionInfo(
     const std::string& name,
     scoped_ptr<base::ListValue> arguments,
@@ -27,6 +35,58 @@ XWalkExtensionFunctionHandler::XWalkExtensionFunctionHandler(
     weak_factory_(this) {}
 
 XWalkExtensionFunctionHandler::~XWalkExtensionFunctionHandler() {}
+
+void XWalkExtensionFunctionHandler::HandleBinaryMessage(
+    scoped_ptr<base::Value> msg) {
+  const base::BinaryValue* binary_msg = nullptr;
+  if (!msg->GetAsBinary(&binary_msg)) {
+    LOG(WARNING) << "Invalid msg type.";
+    return;
+  }
+
+  char* buffer = const_cast<char*>(binary_msg->GetBuffer());
+  int* int_array = reinterpret_cast<int*>(buffer);
+  int func_name_len = int_array[0];
+  int aligned_func_name_len = AlignedWith4Bytes(func_name_len);
+
+  std::string func_name(buffer + sizeof(int), func_name_len);
+
+  int_array = reinterpret_cast<int*>(
+      buffer + sizeof(int) + aligned_func_name_len);
+  int callback_id = int_array[0];
+  int object_id = int_array[1];
+  int method_name_len = int_array[2];
+  int aligned_method_name_len = AlignedWith4Bytes(method_name_len);
+
+  char* method_buffer =
+      buffer + sizeof(int) + aligned_func_name_len + 3 * sizeof(int);
+  std::string method_name(method_buffer, method_name_len);
+
+  size_t len = sizeof(int) + aligned_func_name_len +
+      3 * sizeof(int) + aligned_method_name_len;
+  char* method_args = buffer + len;
+  size_t size = binary_msg->GetSize() - len;
+  base::BinaryValue* args =
+      base::BinaryValue::CreateWithCopiedBuffer(method_args, size);
+
+  scoped_ptr<base::ListValue> arguments(new base::ListValue());
+  arguments->Insert(0, new base::StringValue(std::to_string(object_id)));
+  arguments->Insert(1, new base::StringValue(method_name));
+  arguments->Insert(2, args);
+  scoped_ptr<XWalkExtensionFunctionInfo> info(
+      new XWalkExtensionFunctionInfo(
+          func_name,
+          arguments.Pass(),
+          base::Bind(&XWalkExtensionFunctionHandler::DispatchResult,
+                     weak_factory_.GetWeakPtr(),
+                     base::MessageLoopProxy::current(),
+                     std::to_string(callback_id))));
+
+  if (!HandleFunction(info.Pass())) {
+    DLOG(WARNING) << "Function not registered: " << func_name;
+    return;
+  }
+}
 
 void XWalkExtensionFunctionHandler::HandleMessage(scoped_ptr<base::Value> msg) {
   base::ListValue* args;

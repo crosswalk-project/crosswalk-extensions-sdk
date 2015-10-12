@@ -75,6 +75,8 @@ class XWalkExtensionFunctionHandler {
   // data structure and invokes HandleFunction().
   void HandleMessage(scoped_ptr<base::Value> msg);
 
+  void HandleBinaryMessage(scoped_ptr<base::Value> msg);
+
   // Executes the handler associated to the |name| tag of the |info| argument
   // passed as parameter.
   bool HandleFunction(scoped_ptr<XWalkExtensionFunctionInfo> info);

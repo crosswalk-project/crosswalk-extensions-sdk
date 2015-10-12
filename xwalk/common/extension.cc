@@ -91,6 +91,8 @@ int32_t XW_Initialize(XW_Extension extension, XW_GetInterface get_interface) {
       g_xw_extension, Extension::OnInstanceCreated,
       Extension::OnInstanceDestroyed);
   g_messaging->Register(g_xw_extension, Extension::HandleMessage);
+  g_messaging->RegisterBinaryMesssageCallback(
+      g_xw_extension, Extension::HandleBinaryMessage);
   g_sync_messaging->Register(g_xw_extension, Extension::HandleSyncMessage);
   return XW_OK;
 }
@@ -174,6 +176,17 @@ void Extension::HandleMessage(XW_Instance xw_instance, const char* msg) {
   if (!instance)
     return;
   instance->HandleMessage(msg);
+}
+
+// static
+void Extension::HandleBinaryMessage(XW_Instance xw_instance,
+                                    const char* msg,
+                                    const size_t size) {
+  Instance* instance = reinterpret_cast<Instance*>(
+      g_core->GetInstanceData(xw_instance));
+  if (!instance)
+    return;
+  instance->HandleBinaryMessage(msg, size);
 }
 
 // static
