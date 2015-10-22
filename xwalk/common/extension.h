@@ -70,6 +70,9 @@ class Extension {
   static void OnInstanceCreated(XW_Instance xw_instance);
   static void OnInstanceDestroyed(XW_Instance xw_instance);
   static void HandleMessage(XW_Instance xw_instance, const char* msg);
+  static void HandleBinaryMessage(XW_Instance xw_instance,
+                                  const char* msg,
+                                  const size_t size);
   static void HandleSyncMessage(XW_Instance xw_instance, const char* msg);
 };
 
@@ -84,6 +87,7 @@ class Instance {
 
   virtual void Initialize() {}
   virtual void HandleMessage(const char* msg) = 0;
+  virtual void HandleBinaryMessage(const char* msg, const size_t size) {}
   virtual void HandleSyncMessage(const char* msg) {}
 
   XW_Instance xw_instance() const { return xw_instance_; }

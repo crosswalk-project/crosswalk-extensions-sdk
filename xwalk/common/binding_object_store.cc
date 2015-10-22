@@ -81,14 +81,21 @@ void BindingObjectStore::OnPostMessageToObject(
   if (it == objects_.end())
     return;
 
+  scoped_ptr<base::ListValue> new_args;
   if (!params->arguments->IsType(base::Value::TYPE_LIST)) {
-    LOG(WARNING) << "Malformed message sent to the object with the ID "
-        << params->object_id << ".";
-    return;
+    if (params->arguments->IsType(base::Value::TYPE_BINARY)) {
+      new_args.reset(new base::ListValue());
+      new_args->Insert(
+          0, static_cast<base::BinaryValue*>(params->arguments.release()));
+    } else {
+      LOG(WARNING) << "Malformed message sent to the object with the ID "
+          << params->object_id << ".";
+      return;
+    }
+  } else {
+    new_args.reset(
+        static_cast<base::ListValue*>(params->arguments.release()));
   }
-
-  scoped_ptr<base::ListValue> new_args(
-      static_cast<base::ListValue*>(params->arguments.release()));
 
   scoped_ptr<XWalkExtensionFunctionInfo> new_info(
       new XWalkExtensionFunctionInfo(

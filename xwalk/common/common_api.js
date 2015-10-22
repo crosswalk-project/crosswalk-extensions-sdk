@@ -6,6 +6,7 @@ var callback_listeners = {};
 var callback_id = 0;
 var extension_object;
 var internal = {};
+const byteLengthOfInt32 = 4;
 
 function wrapCallback(args, callback) {
   if (callback) {
@@ -61,6 +62,49 @@ internal.postMessage = function(function_name, args, callback) {
   return id;
 };
 
+function alignedWith4Bytes(number) {
+  return number + (4 - number % 4);
+};
+
+internal.postBinaryMessage = function(functionName, args, callback) {
+  var id = wrapCallback(args, callback);
+
+  var callbackID = parseInt(args[0]);
+  var objectId = parseInt(args[1]);
+  var methodName = args[2];
+  var methodArgs = args[3];
+  var allignFuncNameLen = alignedWith4Bytes(functionName.length);
+  var allignMethodNameLen = alignedWith4Bytes(methodName.length);
+
+  // Final ArrayBuffer includes funcNameLen(int32),funcName(string), callbackID(int32),
+  // objectId(int32), methodNameLen(int32), methodName(string), methodArgs(ArrayBuffer)
+  var byteLen = byteLengthOfInt32 + allignFuncNameLen + 3 * byteLengthOfInt32 +
+      allignMethodNameLen + methodArgs.byteLength;
+  var arrayBuffer = new ArrayBuffer(byteLen);
+  var view = new Int32Array(arrayBuffer, 0, 1);
+  view[0] = functionName.length;
+  view = new Uint8Array(arrayBuffer, byteLengthOfInt32, functionName.length);
+  for (var i = 0; i < functionName.length; i++) {
+    view[i] = functionName.charCodeAt(i);
+  }
+  view = new Int32Array(arrayBuffer, byteLengthOfInt32 + allignFuncNameLen, 3);
+  view[0] = callbackID;
+  view[1] = objectId;
+  view[2] = methodName.length;
+  view = new Uint8Array(arrayBuffer, byteLengthOfInt32 +
+      allignFuncNameLen + 3 * byteLengthOfInt32, methodName.length);
+  for (var i = 0; i < methodName.length; i++) {
+    view[i] = methodName.charCodeAt(i);
+  }
+
+  view = new Uint8Array(arrayBuffer, byteLengthOfInt32 + allignFuncNameLen +
+      3 * byteLengthOfInt32 + allignMethodNameLen);
+  view.set(new Uint8Array(methodArgs), 0);
+
+  extension_object.postMessage(arrayBuffer);
+  return id;
+};
+
 internal.removeCallback = function(id) {
   if (!id in callback_listeners)
     return;
@@ -112,6 +156,16 @@ var Common = function() {
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
   //
+  // _addBinaryMethodWithPromise(name, promise, wrapArgs, wrapReturns?):
+  //     The diff with _addMethodWithPromise is that this method will post
+  //     binary message to native side. It requires that the method arguments must
+  //     be customed to an ArrayBuffer by wrapArgs.
+  //     Convenience function for adding methods that return a Promise. The reply
+  //     from the native side is expected to have two parameters: |data| and |error|.
+  //     wrapArgs will be used to custom the arguments to an ArrayBuffer,
+  //     The optional wrapReturns, if supplied, will be used to custom |data| value,
+  //     if not supplied, the original |data| value will be used.
+  //
   // _addMethodWithPromise2(name, promise, wrapArgs?, wrapReturns?):
   //     The diff with _addMethodWithPromise is that _addMethodWithPromise2's wrapArgs
   //     will return a Promise type, in which usually have async event to process.
@@ -125,11 +179,29 @@ var Common = function() {
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
   //
+  // _addBinaryMethodWithPromise2(name, promise, wrapArgs, wrapReturns?):
+  //     The diff with _addMethodWithPromise2 is that this method will post
+  //     binary message to native side. It requires that the method arguments must
+  //     be customed to an ArrayBuffer by wrapArgs.
+  //     Convenience function for adding methods that return a Promise. The reply
+  //     from the native side is expected to have two parameters: |data| and |error|.
+  //     wrapArgs will be used to custom the arguments to an ArrayBuffer,
+  //     The optional wrapReturns, if supplied, will be used to custom |data| value,
+  //     if not supplied, the original |data| value will be used.
+  //
 
   var BindingObjectPrototype = function() {
     function postMessage(name, args, callback) {
       return internal.postMessage('postMessageToObject',
           [this._id, name, args], callback);
+    };
+
+    function postBinaryMessage(name, arrayBuffer, callback) {
+      if (!(arrayBuffer instanceof ArrayBuffer)) {
+        return callback(null, 'The argument is not an ArrayBuffer');
+      }
+      return internal.postBinaryMessage('postMessageToObject',
+          [this._id, name, arrayBuffer], callback);
     };
 
     function isEnumerable(method_name) {
@@ -167,6 +239,22 @@ var Common = function() {
       });
     };
 
+    function sendBinaryMsg(self, name, arrayBuffer, wrapReturns) {
+      return new Promise(function(resolve, reject) {
+        self._postBinaryMessage(name, arrayBuffer, function (data, error) {
+          if (error) {
+            reject(error);
+          } else {
+            if (wrapReturns) {
+              resolve(wrapReturns(data));
+            } else {
+              resolve(data);
+            }
+          }
+        });
+      });
+    };
+
     function addMethodWithPromise(name, wrapArgs, wrapReturns) {
       Object.defineProperty(this, name, {
         value: function() {
@@ -175,6 +263,18 @@ var Common = function() {
             args = wrapArgs(args);
 
           return sendMsg(this, name, args, wrapReturns);
+        },
+        enumerable: isEnumerable(name),
+      });
+    };
+
+    function addBinaryMethodWithPromise(name, wrapArgs, wrapReturns) {
+      Object.defineProperty(this, name, {
+        value: function() {
+          var args = Array.prototype.slice.call(arguments);
+          var arrayBuffer = wrapArgs(args);
+
+          return sendBinaryMsg(this, name, arrayBuffer, wrapReturns);
         },
         enumerable: isEnumerable(name),
       });
@@ -196,6 +296,19 @@ var Common = function() {
       });
     };
 
+    function addBinaryMethodWithPromise2(name, wrapArgs, wrapReturns) {
+      Object.defineProperty(this, name, {
+        value: function() {
+          var self = this;
+          var args = Array.prototype.slice.call(arguments);
+          return wrapArgs(args).then(function(arrayBuffer) {
+            return sendBinaryMsg(self, name, arrayBuffer, wrapReturns);
+          });
+        },
+        enumerable: isEnumerable(name),
+      });
+    };
+
     function registerLifecycleTracker() {
       Object.defineProperty(this, '_tracker', {
         value: v8tools.lifecycleTracker(),
@@ -211,14 +324,23 @@ var Common = function() {
       '_postMessage' : {
         value: postMessage,
       },
+      '_postBinaryMessage': {
+        value: postBinaryMessage,
+      },
       '_addMethod' : {
         value: addMethod,
       },
       '_addMethodWithPromise' : {
         value: addMethodWithPromise,
       },
+      '_addBinaryMethodWithPromise': {
+        value: addBinaryMethodWithPromise,
+      },
       '_addMethodWithPromise2': {
         value: addMethodWithPromise2,
+      },
+      '_addBinaryMethodWithPromise2': {
+        value: addBinaryMethodWithPromise2,
       },
       '_registerLifecycleTracker' : {
         value: registerLifecycleTracker,
