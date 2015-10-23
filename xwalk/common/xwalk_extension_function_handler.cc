@@ -49,28 +49,34 @@ void XWalkExtensionFunctionHandler::HandleBinaryMessage(
   int func_name_len = int_array[0];
   int aligned_func_name_len = AlignedWith4Bytes(func_name_len);
 
-  std::string func_name(buffer + sizeof(int), func_name_len);
+  int offset = sizeof(int);
+  std::string func_name(buffer + offset, func_name_len);
 
-  int_array = reinterpret_cast<int*>(
-      buffer + sizeof(int) + aligned_func_name_len);
+  offset += aligned_func_name_len;
+  int_array = reinterpret_cast<int*>(buffer + offset);
   int callback_id = int_array[0];
-  int object_id = int_array[1];
-  int method_name_len = int_array[2];
+  int object_id_len = int_array[1];
+  int aligned_object_id_len = AlignedWith4Bytes(object_id_len);
+
+  offset += 2 * sizeof(int);
+  std::string object_id(buffer + offset, object_id_len);
+
+  offset += aligned_object_id_len;
+  int_array = reinterpret_cast<int*>(buffer + offset);
+  int method_name_len = int_array[0];
   int aligned_method_name_len = AlignedWith4Bytes(method_name_len);
 
-  char* method_buffer =
-      buffer + sizeof(int) + aligned_func_name_len + 3 * sizeof(int);
-  std::string method_name(method_buffer, method_name_len);
+  offset += sizeof(int);
+  std::string method_name(buffer + offset, method_name_len);
 
-  size_t len = sizeof(int) + aligned_func_name_len +
-      3 * sizeof(int) + aligned_method_name_len;
-  char* method_args = buffer + len;
-  size_t size = binary_msg->GetSize() - len;
+  offset += aligned_method_name_len;
+  char* method_args = buffer + offset;
+  size_t size = binary_msg->GetSize() - offset;
   base::BinaryValue* args =
       base::BinaryValue::CreateWithCopiedBuffer(method_args, size);
 
   scoped_ptr<base::ListValue> arguments(new base::ListValue());
-  arguments->Insert(0, new base::StringValue(std::to_string(object_id)));
+  arguments->Insert(0, new base::StringValue(object_id));
   arguments->Insert(1, new base::StringValue(method_name));
   arguments->Insert(2, args);
   scoped_ptr<XWalkExtensionFunctionInfo> info(
