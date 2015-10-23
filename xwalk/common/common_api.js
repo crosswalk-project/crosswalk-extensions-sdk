@@ -276,9 +276,14 @@ var Common = function() {
       Object.defineProperty(this, name, {
         value: function() {
           var args = Array.prototype.slice.call(arguments);
-          if (wrapArgs)
+          if (wrapArgs) {
             args = wrapArgs(args);
-
+            if (!args) {
+              return new Promise(function(resolve, reject) {
+                reject('Package the parameters failed. Invalid parameters');
+              });
+            }
+          }
           return sendMsg(this, name, args, wrapReturns);
         },
         enumerable: isEnumerable(name),
@@ -290,7 +295,11 @@ var Common = function() {
         value: function() {
           var args = Array.prototype.slice.call(arguments);
           var arrayBuffer = wrapArgs(args);
-
+          if (!arrayBuffer) {
+            return new Promise(function(resolve, reject) {
+              reject('Package the parameters failed. Invalid parameters');
+            });
+          }
           return sendBinaryMsg(this, name, arrayBuffer, wrapReturns);
         },
         enumerable: isEnumerable(name),
@@ -304,6 +313,10 @@ var Common = function() {
           var args = Array.prototype.slice.call(arguments);
           if (wrapArgs) {
             return wrapArgs(args).then(function(resultData) {
+              if (!resultData)
+                return new Promise(function(resolve, reject) {
+                  reject('Package the parameters failed. Invalid parameters');
+                });
               return sendMsg(self, name, resultData, wrapReturns);
             });
           }
@@ -319,6 +332,10 @@ var Common = function() {
           var self = this;
           var args = Array.prototype.slice.call(arguments);
           return wrapArgs(args).then(function(arrayBuffer) {
+            if (!arrayBuffer)
+              return new Promise(function(resolve, reject) {
+                reject('Package the parameters failed. Invalid parameters');
+              });
             return sendBinaryMsg(self, name, arrayBuffer, wrapReturns);
           });
         },
