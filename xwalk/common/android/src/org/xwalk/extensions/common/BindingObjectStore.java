@@ -6,6 +6,10 @@ package org.xwalk.extensions.common;
 
 import android.util.Log;
 
+import java.lang.Byte;
+import java.lang.Integer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,15 +56,33 @@ public class BindingObjectStore {
             BindingObject obj = getBindingObject(info.getObjectId());
 
             FunctionInfo newInfo = new FunctionInfo(info);
-            JSONArray args = info.getArgs();
-            String objectMethodName = args.getString(0);
-            JSONArray objectMethodArgs = args.getJSONArray(1);
-            newInfo.setFunctionName(objectMethodName);
-            newInfo.setArgs(objectMethodArgs);
-
+            if (info.getArgs() != null) {
+                JSONArray args = info.getArgs();
+                String objectMethodName = args.getString(0);
+                JSONArray objectMethodArgs = args.getJSONArray(1);
+                newInfo.setFunctionName(objectMethodName);
+                newInfo.setArgs(objectMethodArgs);
+            } else {
+                ByteBuffer args = info.getBinaryArgs();
+                args.order(ByteOrder.LITTLE_ENDIAN);
+                int byteOffset = args.position();
+                int methodNameLen = args.getInt(byteOffset);
+                byteOffset += Integer.SIZE / Byte.SIZE;
+                int alignedMethodNameLen = methodNameLen + (4 - methodNameLen % 4);
+                String objectMethodName = new String(args.array(), byteOffset, methodNameLen);
+                byteOffset += alignedMethodNameLen;
+                int len = args.array().length - byteOffset;
+                ByteBuffer objectMethodArgs = ByteBuffer.wrap(args.array(), byteOffset, len);
+                newInfo.setFunctionName(objectMethodName);
+                newInfo.setBinaryArgs(objectMethodArgs);
+            }
             if (obj != null)
                 obj.handleFunction(newInfo);
         } catch (JSONException e) {
+            Log.e(TAG, e.toString());
+        } catch (IndexOutOfBoundsException e) {
+            Log.e(TAG, e.toString());
+        } catch (NullPointerException e) {
             Log.e(TAG, e.toString());
         }
     }
