@@ -70,35 +70,52 @@ internal.postBinaryMessage = function(functionName, args, callback) {
   var id = wrapCallback(args, callback);
 
   var callbackID = parseInt(args[0]);
-  var objectId = parseInt(args[1]);
+  var objectId = args[1];
   var methodName = args[2];
   var methodArgs = args[3];
   var allignFuncNameLen = alignedWith4Bytes(functionName.length);
   var allignMethodNameLen = alignedWith4Bytes(methodName.length);
+  var allignObjectId = alignedWith4Bytes(objectId.length);
 
   // Final ArrayBuffer includes funcNameLen(int32),funcName(string), callbackID(int32),
-  // objectId(int32), methodNameLen(int32), methodName(string), methodArgs(ArrayBuffer)
-  var byteLen = byteLengthOfInt32 + allignFuncNameLen + 3 * byteLengthOfInt32 +
-      allignMethodNameLen + methodArgs.byteLength;
+  // objectIdLen(int32), objectId(string), methodNameLen(int32), methodName(string),
+  // methodArgs(ArrayBuffer)
+  var byteLen = byteLengthOfInt32 + allignFuncNameLen + 2 * byteLengthOfInt32 +
+      allignObjectId + byteLengthOfInt32 + allignMethodNameLen + methodArgs.byteLength;
   var arrayBuffer = new ArrayBuffer(byteLen);
-  var view = new Int32Array(arrayBuffer, 0, 1);
+  var offset = 0;
+  var view = new Int32Array(arrayBuffer, offset, 1);
   view[0] = functionName.length;
-  view = new Uint8Array(arrayBuffer, byteLengthOfInt32, functionName.length);
+
+  offset += byteLengthOfInt32;
+  view = new Uint8Array(arrayBuffer, offset, functionName.length);
   for (var i = 0; i < functionName.length; i++) {
     view[i] = functionName.charCodeAt(i);
   }
-  view = new Int32Array(arrayBuffer, byteLengthOfInt32 + allignFuncNameLen, 3);
+
+  offset += allignFuncNameLen;
+  view = new Int32Array(arrayBuffer, offset, 2);
   view[0] = callbackID;
-  view[1] = objectId;
-  view[2] = methodName.length;
-  view = new Uint8Array(arrayBuffer, byteLengthOfInt32 +
-      allignFuncNameLen + 3 * byteLengthOfInt32, methodName.length);
+  view[1] = objectId.length;
+
+  offset += 2 * byteLengthOfInt32;
+  view = new Uint8Array(arrayBuffer, offset, objectId.length);
+  for (var i = 0; i < objectId.length; i++) {
+    view[i] = objectId.charCodeAt(i);
+  }
+
+  offset += allignObjectId;
+  view = new Int32Array(arrayBuffer, offset, 1);
+  view[0] = methodName.length;
+
+  offset += byteLengthOfInt32;
+  view = new Uint8Array(arrayBuffer, offset, methodName.length);
   for (var i = 0; i < methodName.length; i++) {
     view[i] = methodName.charCodeAt(i);
   }
 
-  view = new Uint8Array(arrayBuffer, byteLengthOfInt32 + allignFuncNameLen +
-      3 * byteLengthOfInt32 + allignMethodNameLen);
+  offset += allignMethodNameLen;
+  view = new Uint8Array(arrayBuffer, offset);
   view.set(new Uint8Array(methodArgs), 0);
 
   extension_object.postMessage(arrayBuffer);
@@ -241,7 +258,7 @@ var Common = function() {
 
     function sendBinaryMsg(self, name, arrayBuffer, wrapReturns) {
       return new Promise(function(resolve, reject) {
-        self._postBinaryMessage(name, arrayBuffer, function (data, error) {
+        self._postBinaryMessage(name, arrayBuffer, function(data, error) {
           if (error) {
             reject(error);
           } else {
@@ -259,9 +276,14 @@ var Common = function() {
       Object.defineProperty(this, name, {
         value: function() {
           var args = Array.prototype.slice.call(arguments);
-          if (wrapArgs)
+          if (wrapArgs) {
             args = wrapArgs(args);
-
+            if (!args) {
+              return new Promise(function(resolve, reject) {
+                reject('Package the parameters failed. Invalid parameters');
+              });
+            }
+          }
           return sendMsg(this, name, args, wrapReturns);
         },
         enumerable: isEnumerable(name),
@@ -273,7 +295,11 @@ var Common = function() {
         value: function() {
           var args = Array.prototype.slice.call(arguments);
           var arrayBuffer = wrapArgs(args);
-
+          if (!arrayBuffer) {
+            return new Promise(function(resolve, reject) {
+              reject('Package the parameters failed. Invalid parameters');
+            });
+          }
           return sendBinaryMsg(this, name, arrayBuffer, wrapReturns);
         },
         enumerable: isEnumerable(name),
@@ -287,6 +313,10 @@ var Common = function() {
           var args = Array.prototype.slice.call(arguments);
           if (wrapArgs) {
             return wrapArgs(args).then(function(resultData) {
+              if (!resultData)
+                return new Promise(function(resolve, reject) {
+                  reject('Package the parameters failed. Invalid parameters');
+                });
               return sendMsg(self, name, resultData, wrapReturns);
             });
           }
@@ -302,6 +332,10 @@ var Common = function() {
           var self = this;
           var args = Array.prototype.slice.call(arguments);
           return wrapArgs(args).then(function(arrayBuffer) {
+            if (!arrayBuffer)
+              return new Promise(function(resolve, reject) {
+                reject('Package the parameters failed. Invalid parameters');
+              });
             return sendBinaryMsg(self, name, arrayBuffer, wrapReturns);
           });
         },
