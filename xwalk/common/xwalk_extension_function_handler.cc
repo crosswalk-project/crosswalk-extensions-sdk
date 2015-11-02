@@ -202,7 +202,7 @@ void XWalkExtensionFunctionHandler::PostMessageToInstance(
     } else {
       std::string value;
       JSONStringValueSerializer serializer(&value);
-      serializer.Serialize(*msg);
+      serializer.SerializeAndOmitBinaryValues(*msg);
       instance_->PostMessage(value.c_str());
     }
   }
