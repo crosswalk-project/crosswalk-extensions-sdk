@@ -72,6 +72,12 @@ hooks = [
     'pattern': '.',
     'action': ['python', 'src/tools/clang/scripts/update.py', '--if-needed'],
   },
+  # TODO: This hook should be in realsense repo.
+  {
+    'name': 'prepare_android_rssdk',
+    'pattern': '.',
+    'action': ['python', 'src/extensions/build/rssdk/prepare_android_rssdk.py'],
+  },
   # TODO: Switch to GN later.
   {
     "name": "gyp_all",
