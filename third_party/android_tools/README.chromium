@@ -1,0 +1,51 @@
+Name: Android Tools (SDK/NDK)
+URL: http://developer.android.com/sdk/index.html
+Versions:
+  NDK r10c
+  Android SDK Platform API 22
+  Android SDK Tools 24.1.2
+  Android SDK Platform-tools 22
+  Android SDK Build-tools 22
+  Android SDK Sources 22
+  Android Support Library 22.0.0
+  Google Cloud Messaging 3
+Security Critical: no
+License: Apache Version 2.0
+
+Description:
+The Android SDK/NDK provide API libraries and developer tools necessary to
+build, test and debug for Android.
+
+Local Modifications:
+
+-In ndk/
+- Removed old android platforms in platforms/
+  (anything under android-14)
+- Removed GCC 4.6 toolchains in toolchains/
+  as they are deprecated and no longer used in Chromium.
+- Also deleted sources/cxx-stl/gnu-libstdc++/4.6/ for the same reason.
+- Edited stlport to force GCC to do "proper" inlining decisions
+  (see crbug.com/377433)
+    sources/cxx-stl/stlport/stlport/stl/_construct.h
+    sources/cxx-stl/stlport/stlport/stl/_vector.c
+- Cherry-picked https://android-review.googlesource.com/#/c/123717/
+- Cherry-picked
+    http://llvm.org/viewvc/llvm-project?view=revision&revision=227226
+-Cherry-picked more recent version of the aarch64 toolchain containing
+    https://android-review.googlesource.com/#/c/113144/
+    https://android-review.googlesource.com/#/c/118930/
+    https://android-review.googlesource.com/#/c/144632/
+
+-In sdk/
+- Included the Android support library and required extras packages
+- Removed unused resources from the support library (see crbug.com/372481)
+- Updated trace-viewer script to r220 under sdk/tools/systrace.
+  Steps to update to the latest version of trace-viewer:
+    git clone https://android.googlesource.com/platform/external/chromium-trace
+    cd chromium-trace
+    ./update.py
+    cp script.js style.css $ANDROID_SDK_ROOT/tools/systrace
+ - Modified sdk/extras/android/support/v7/appcompat/res/layout/abc_activity_chooser_view.xml
+   by replacing accidental use of layout_marginEnd with layout_marginBottom.
+
+No other modifications has been made to the public Android SDK/NDK.
