@@ -53,6 +53,14 @@ internal.setupInternalExtension = function(extension_obj) {
   });
 };
 
+internal.sendSyncMessage = function(function_name, args) {
+  args.unshift(function_name);
+  var msg = JSON.stringify(args);
+
+  var result = extension_object.internal.sendSyncMessage(msg);
+  return JSON.parse(result);
+};
+
 internal.postMessage = function(function_name, args, callback) {
   var id = wrapCallback(args, callback);
   args.unshift(function_name);
