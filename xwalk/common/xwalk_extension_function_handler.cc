@@ -86,6 +86,7 @@ void XWalkExtensionFunctionHandler::HandleBinaryMessage(
           base::Bind(&XWalkExtensionFunctionHandler::DispatchResult,
                      weak_factory_.GetWeakPtr(),
                      base::MessageLoopProxy::current(),
+                     false,
                      std::to_string(callback_id))));
 
   if (!HandleFunction(info.Pass())) {
@@ -131,10 +132,49 @@ void XWalkExtensionFunctionHandler::HandleMessage(scoped_ptr<base::Value> msg) {
           base::Bind(&XWalkExtensionFunctionHandler::DispatchResult,
                      weak_factory_.GetWeakPtr(),
                      base::MessageLoopProxy::current(),
+                     false,
                      callback_id)));
 
   if (!HandleFunction(info.Pass())) {
     DLOG(WARNING) << "Function not registered: " << function_name;
+    return;
+  }
+}
+
+void XWalkExtensionFunctionHandler::HandleSyncMessage(
+    scoped_ptr<base::Value> msg) {
+  base::ListValue* args;
+  scoped_ptr<base::Value> result(new base::FundamentalValue(false));
+  if (!msg->GetAsList(&args) || args->GetSize() < 2) {
+    SendSyncMessageToInstance(result.Pass());
+    return;
+  }
+
+  // The first parameter stands for the function name.
+  std::string function_name;
+  if (!args->GetString(0, &function_name)) {
+    LOG(WARNING) << "The function name is not a string.";
+    SendSyncMessageToInstance(result.Pass());
+    return;
+  }
+
+  // We reuse args to pass the extra arguments to the handler, so remove
+  // function_name from it.
+  args->Remove(0, NULL);
+
+  scoped_ptr<XWalkExtensionFunctionInfo> info(
+      new XWalkExtensionFunctionInfo(
+          function_name,
+          make_scoped_ptr(static_cast<base::ListValue*>(msg.release())),
+          base::Bind(&XWalkExtensionFunctionHandler::DispatchResult,
+                     weak_factory_.GetWeakPtr(),
+                     base::MessageLoopProxy::current(),
+                     true,
+                     "")));
+
+  if (!HandleFunction(info.Pass())) {
+    DLOG(WARNING) << "Function not registered: " << function_name;
+    SendSyncMessageToInstance(result.Pass());
     return;
   }
 }
@@ -154,8 +194,9 @@ bool XWalkExtensionFunctionHandler::HandleFunction(
 void XWalkExtensionFunctionHandler::DispatchResult(
     const base::WeakPtr<XWalkExtensionFunctionHandler>& handler,
     scoped_refptr<base::MessageLoopProxy> client_task_runner,
+    const bool isSyncMessage,
     const std::string& callback_id,
-    scoped_ptr<base::ListValue> result) {
+    scoped_ptr<base::Value> result) {
   DCHECK(result);
 
   if (client_task_runner != base::MessageLoopProxy::current()) {
@@ -163,8 +204,14 @@ void XWalkExtensionFunctionHandler::DispatchResult(
         base::Bind(&XWalkExtensionFunctionHandler::DispatchResult,
                    handler,
                    client_task_runner,
+                   isSyncMessage,
                    callback_id,
                    base::Passed(&result)));
+    return;
+  }
+
+  if (isSyncMessage) {
+    handler->SendSyncMessageToInstance(result.Pass());
     return;
   }
 
@@ -175,9 +222,16 @@ void XWalkExtensionFunctionHandler::DispatchResult(
     return;
   }
 
+  base::ListValue* result_list(new base::ListValue());
+  if (!result->GetAsList(&result_list)) {
+    std::string error =
+        "The result type is not a base::ListValue with [data, error]";
+    result_list->Append(new base::StringValue(std::string()));
+    result_list->Append(new base::StringValue(error));
+  }
   // Prepend the callback id to the list, so the handlers
   // on the JavaScript side know which callback should be evoked.
-  result->Insert(0, new base::StringValue(callback_id));
+  result_list->Insert(0, new base::StringValue(callback_id));
 
   if (handler)
     handler->PostMessageToInstance(result.Pass());
@@ -206,6 +260,14 @@ void XWalkExtensionFunctionHandler::PostMessageToInstance(
       instance_->PostMessage(value.c_str());
     }
   }
+}
+
+void XWalkExtensionFunctionHandler::SendSyncMessageToInstance(
+    scoped_ptr<base::Value> result) {
+  std::string value;
+  JSONStringValueSerializer serializer(&value);
+  serializer.SerializeAndOmitBinaryValues(*result);
+  instance_->SendSyncReply(value.c_str());
 }
 
 }  // namespace common

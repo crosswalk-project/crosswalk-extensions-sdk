@@ -20,7 +20,7 @@ namespace common {
 // signature of a method in JavaScript. The struct can be safely passed around.
 class XWalkExtensionFunctionInfo {
  public:
-  typedef base::Callback<void(scoped_ptr<base::ListValue> result)>
+  typedef base::Callback<void(scoped_ptr<base::Value> result)>
       PostResultCallback;
 
   XWalkExtensionFunctionInfo(const std::string& name,
@@ -34,7 +34,9 @@ class XWalkExtensionFunctionInfo {
   // will ultimately dispatch the result to the appropriated instance or
   // do nothing in case the instance doesn't exist anymore. PostResult can
   // be called from any thread.
-  void PostResult(scoped_ptr<base::ListValue> result) const {
+  // For async message, |result| should be a base::ListValue, with [data, error].
+  // For sync message, |result| should be a base::Value with data
+  void PostResult(scoped_ptr<base::Value> result) const {
     post_result_cb_.Run(result.Pass());
   }
 
@@ -76,6 +78,7 @@ class XWalkExtensionFunctionHandler {
   void HandleMessage(scoped_ptr<base::Value> msg);
 
   void HandleBinaryMessage(scoped_ptr<base::Value> msg);
+  void HandleSyncMessage(scoped_ptr<base::Value> msg);
 
   // Executes the handler associated to the |name| tag of the |info| argument
   // passed as parameter.
@@ -107,10 +110,12 @@ class XWalkExtensionFunctionHandler {
   static void DispatchResult(
       const base::WeakPtr<XWalkExtensionFunctionHandler>& handler,
       scoped_refptr<base::MessageLoopProxy> client_task_runner,
+      const bool isSyncMessage,
       const std::string& callback_id,
-      scoped_ptr<base::ListValue> result);
+      scoped_ptr<base::Value> result);
 
   void PostMessageToInstance(scoped_ptr<base::Value> msg);
+  void SendSyncMessageToInstance(scoped_ptr<base::Value> result);
 
   typedef std::map<std::string, FunctionHandler> FunctionHandlerMap;
   FunctionHandlerMap handlers_;
