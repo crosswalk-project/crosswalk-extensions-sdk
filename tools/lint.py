@@ -132,7 +132,7 @@ def do_cpp_lint(changeset, args):
   print '_____ do cpp lint'
   if len(changeset) == 0:
     print 'changeset is empty except python files'
-    return
+    return 0
   # Following code is referencing depot_tools/gcl.py: CMDlint
   # Process cpplints arguments if any.
   filenames = cpplint.ParseArguments(args + changeset)
@@ -158,7 +158,8 @@ def do_cpp_lint(changeset, args):
                             extra_check_functions)
     else:
       print "Skipping file %s" % filename
-  print "Total errors found: %d\n" % cpplint_state.error_count
+  print "cpplint errors %d\n" % cpplint_state.error_count
+  return cpplint_state.error_count
 
 def do_py_lint(changeset):
   print '_____ do python lint'
@@ -167,6 +168,7 @@ def do_py_lint(changeset):
   else:
     pylint_cmd = ['pylint']
   _has_import_error = False
+  error_count = 0;
   for pyfile in changeset:
     py_dir, py_name = os.path.split(os.path.abspath(pyfile))
     previous_cwd = os.getcwd()
@@ -176,14 +178,19 @@ def do_py_lint(changeset):
       output = GetCommandOutput(pylint_cmd + [py_name]).strip()
       if len(output) > 0:
         print output
+      else:
+        error_count += 1;
     except Exception, e:
       if not _has_import_error and \
           'F0401:' in [error[:6] for error in str(e).splitlines()]:
         _has_import_error = True
       print e
+      error_count += 1;
     os.chdir(previous_cwd)
   if _has_import_error:
     print 'You have error for python importing, please check your PYTHONPATH'
+  print "pylint errors %d\n" % error_count
+  return error_count
 
 def do_js_lint(changeset):
   print '\n_____ do JavaScript lint'
@@ -191,6 +198,7 @@ def do_js_lint(changeset):
     jslint_cmd = ['gjslint.exe']
   else:
     jslint_cmd = ['gjslint']
+  error_count = 0;
   for jsfile in changeset:
     args = ['--strict', '--nojsdoc', '--max_line_length', '100', '--unix_mode']
     js_dir, js_name = os.path.split(os.path.abspath(jsfile))
@@ -202,18 +210,25 @@ def do_js_lint(changeset):
       output = GetCommandOutput(jslint_cmd + args).strip()
       if len(output) > 0:
         print output
+      else:
+        error_count += 1;
     except Exception, e:
       print e
+      error_count += 1;
     os.chdir(previous_cwd)
+  print "jslint errors %d\n" % error_count
+  return error_count
 
 def do_lint(base, args):
   if base == None:
     base = get_tracking_remote()
   changes_py, changes_js, changes_others = get_change_file_list(base)
-  do_cpp_lint(changes_others, args)
-  do_py_lint(changes_py)
-  do_js_lint(changes_js)
-  return 1
+  total_erros = 0;
+  total_erros += do_cpp_lint(changes_others, args)
+  total_erros += do_py_lint(changes_py)
+  total_erros += do_js_lint(changes_js)
+  print "The total errors found: %d\n" % total_erros
+  return total_erros
 
 from optparse import OptionParser, BadOptionError
 class PassThroughOptionParser(OptionParser):
