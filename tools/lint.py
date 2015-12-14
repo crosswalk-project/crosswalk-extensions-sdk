@@ -7,6 +7,7 @@
 # TODO(wang16): Only show error for the lines do changed in the changeset
 
 import os
+import os.path
 import re
 import sys
 
@@ -170,6 +171,9 @@ def do_py_lint(changeset):
   _has_import_error = False
   error_count = 0;
   for pyfile in changeset:
+    if os.path.exists(pyfile) != True:
+      print "Skipping file %s: File doesn't exist." % pyfile
+      continue
     py_dir, py_name = os.path.split(os.path.abspath(pyfile))
     previous_cwd = os.getcwd()
     os.chdir(py_dir)
@@ -200,6 +204,9 @@ def do_js_lint(changeset):
     jslint_cmd = ['gjslint']
   error_count = 0;
   for jsfile in changeset:
+    if os.path.exists(jsfile) != True:
+      print "Skipping file %s: File doesn't exist." % jsfile
+      continue
     args = ['--strict', '--nojsdoc', '--max_line_length', '100', '--unix_mode']
     js_dir, js_name = os.path.split(os.path.abspath(jsfile))
     previous_cwd = os.getcwd()
