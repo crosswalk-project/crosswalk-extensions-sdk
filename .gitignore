@@ -63,8 +63,10 @@ _out
 /testing/gtest
 /third_party/icu
 /third_party/llvm-build
+/third_party/android_tools/ndk
+/third_party/android_tools/sdk
+/third_party/colorama/src
+/third_party/jsr-305/src
 /tools/gyp
 /tools/json_schema_compiler/test/json_schema_compiler_tests.xml
 /out*
-/third_party/colorama/src
-/third_party/jsr-305/src

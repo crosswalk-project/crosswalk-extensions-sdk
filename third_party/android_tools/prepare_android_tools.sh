@@ -34,7 +34,7 @@ fi
 echo "preparing sdk..."
 if [ ! ${ANDROID_HOME} ]; then
   echo "Please set ANDROID_HOME to Android SDK root"
-  return 1;
+  exit 1
 fi
 
 if [ ! -d ${ANDROID_HOME}/platforms/android-${ANDROID_SDK_VERSION} ]; then
