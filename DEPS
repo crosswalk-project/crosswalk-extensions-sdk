@@ -69,10 +69,4 @@ hooks = [
     'pattern': '.',
     'action': ['python', 'src/tools/clang/scripts/update.py', '--if-needed'],
   },
-  # TODO: Switch to GN later.
-  {
-    "name": "gyp_all",
-    "pattern": ".",
-    "action": ["python", "src/gyp_all"],
-  }
 ]
