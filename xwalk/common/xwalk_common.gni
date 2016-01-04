@@ -70,26 +70,12 @@ template("xwalk_idlgen") {
       "$target_gen_dir/{{source_name_part}}.h",
     ]
 
-    # FIXME (halton):
-    # If we pass "$target_gen_dir" as destdir directly, files will be generated into wrong location.
-    # For eg: extensions/foo/bar/bar.idl will be generated into
-    # out/Debug/gen/extensions/extensions/extensions/foo/bar/, there is extra extensions in the path.
-    # While xwalk/common/common.idl will be correctly generated into out/Debug/gen/xwalk/common/
-    #
-    # We use use no_hack as workaround to control whether to remove the extra path. To reduce the 
-    # impact for extensions folder, this variable is only needed defined in xwalk/common/BUILD.gn.
-    if (defined(invoker.no_hack) && invoker.no_hack) {
-      destdir = rebase_path("$target_gen_dir")
-    } else {
-      destdir = get_path_info(rebase_path("$target_gen_dir"), "dir")
-    }
-
     namespace = invoker.namespace + "::%(namespace)s"
 
     args = [
       "{{source}}",
-      "--root=.",
-      "--destdir=$destdir",
+      "--root=../..",
+      "--destdir=gen",
       "--namespace=$namespace",
       "--generator=cpp",
     ]
