@@ -7,7 +7,6 @@ import("//xwalk/common/xwalk_common.gni")
 xwalk_idlgen("common_idl") {
   namespace = "xwalk::jsapi"
   sources = [ "common.idl" ]
-  no_hack = true
 }
 
 xwalk_js2c("common_js") {
