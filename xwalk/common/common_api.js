@@ -72,7 +72,7 @@ internal.postMessage = function(function_name, args, callback) {
 
 function alignedWith4Bytes(number) {
   return number + (4 - number % 4);
-};
+}
 
 internal.postBinaryMessage = function(functionName, args, callback) {
   var id = wrapCallback(args, callback);
@@ -248,11 +248,15 @@ var Common = function() {
       });
     };
 
-    function sendMsg(self, name, args, wrapReturns) {
+    function sendMsg(self, name, args, wrapReturns, wrapErrorResult) {
       return new Promise(function(resolve, reject) {
         self._postMessage(name, args, function(data, error) {
           if (error) {
-            reject(error);
+            if (wrapErrorResult) {
+              reject(wrapErrorResult(error));
+            } else {
+              reject(error);
+            }
           } else {
             if (wrapReturns) {
               resolve(wrapReturns(data));
@@ -264,11 +268,15 @@ var Common = function() {
       });
     };
 
-    function sendBinaryMsg(self, name, arrayBuffer, wrapReturns) {
+    function sendBinaryMsg(self, name, arrayBuffer, wrapReturns, wrapErrorResult) {
       return new Promise(function(resolve, reject) {
         self._postBinaryMessage(name, arrayBuffer, function(data, error) {
           if (error) {
-            reject(error);
+            if (wrapErrorResult) {
+              reject(wrapErrorResult(error));
+            } else {
+              reject(error);
+            }
           } else {
             if (wrapReturns) {
               resolve(wrapReturns(data));
@@ -280,7 +288,7 @@ var Common = function() {
       });
     };
 
-    function addMethodWithPromise(name, wrapArgs, wrapReturns) {
+    function addMethodWithPromise(name, wrapArgs, wrapReturns, wrapErrorResult) {
       Object.defineProperty(this, name, {
         value: function() {
           var args = Array.prototype.slice.call(arguments);
@@ -292,13 +300,13 @@ var Common = function() {
               });
             }
           }
-          return sendMsg(this, name, args, wrapReturns);
+          return sendMsg(this, name, args, wrapReturns, wrapErrorResult);
         },
         enumerable: isEnumerable(name),
       });
     };
 
-    function addBinaryMethodWithPromise(name, wrapArgs, wrapReturns) {
+    function addBinaryMethodWithPromise(name, wrapArgs, wrapReturns, wrapErrorResult) {
       Object.defineProperty(this, name, {
         value: function() {
           var args = Array.prototype.slice.call(arguments);
@@ -308,13 +316,13 @@ var Common = function() {
               reject('Package the parameters failed. Invalid parameters');
             });
           }
-          return sendBinaryMsg(this, name, arrayBuffer, wrapReturns);
+          return sendBinaryMsg(this, name, arrayBuffer, wrapReturns, wrapErrorResult);
         },
         enumerable: isEnumerable(name),
       });
     };
 
-    function addMethodWithPromise2(name, wrapArgs, wrapReturns) {
+    function addMethodWithPromise2(name, wrapArgs, wrapReturns, wrapErrorResult) {
       Object.defineProperty(this, name, {
         value: function() {
           var self = this;
@@ -325,7 +333,7 @@ var Common = function() {
                 return new Promise(function(resolve, reject) {
                   reject('Package the parameters failed. Invalid parameters');
                 });
-              return sendMsg(self, name, resultData, wrapReturns);
+              return sendMsg(self, name, resultData, wrapReturns, wrapErrorResult);
             });
           }
           return sendMsg(self, name, args, wrapReturns);
@@ -334,7 +342,7 @@ var Common = function() {
       });
     };
 
-    function addBinaryMethodWithPromise2(name, wrapArgs, wrapReturns) {
+    function addBinaryMethodWithPromise2(name, wrapArgs, wrapReturns, wrapErrorResult) {
       Object.defineProperty(this, name, {
         value: function() {
           var self = this;
@@ -344,7 +352,7 @@ var Common = function() {
               return new Promise(function(resolve, reject) {
                 reject('Package the parameters failed. Invalid parameters');
               });
-            return sendBinaryMsg(self, name, arrayBuffer, wrapReturns);
+            return sendBinaryMsg(self, name, arrayBuffer, wrapReturns, wrapErrorResult);
           });
         },
         enumerable: isEnumerable(name),
