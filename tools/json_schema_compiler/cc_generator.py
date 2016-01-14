@@ -148,9 +148,12 @@ class _Generator(object):
 
       real_t = self._type_helper.FollowRef(t)
       if real_t.property_type == PropertyType.ENUM:
-        items.append('%s(%s)' % (
-            prop.unix_name,
-            self._type_helper.GetEnumNoneValue(t)))
+        namespace_prefix = ('%s::' % real_t.namespace.unix_name
+                            if real_t.namespace != self._namespace
+                            else '')
+        items.append('%s(%s%s)' % (prop.unix_name,
+                                   namespace_prefix,
+                                   self._type_helper.GetEnumNoneValue(t)))
       elif prop.optional:
         continue
       elif t.property_type == PropertyType.INTEGER:
