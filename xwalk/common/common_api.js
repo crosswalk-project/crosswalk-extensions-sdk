@@ -167,21 +167,23 @@ var Common = function() {
   //     |postMessage| but wraps the unique identifier as the first argument
   //     automatically.
   //
-  // _addMethod(name, has_callback):
+  // _addMethod(name, has_callback, experimental?):
   //     Convenience function for adding methods to an object that have a
   //     correspondent on the native side. Methods names that start with "_" are
   //     define as not enumerable by default. Set |has_callback| to true if the
   //     method expects a callback as the last parameter.
+  //     Set |experimental| to show warning message to console.
   //
-  // _addMethodWithPromise(name, promise, wrapArgs?, wrapReturns?):
+  // _addMethodWithPromise(name, promise, wrapArgs?, wrapReturns?, experimental?):
   //     Convenience function for adding methods that return a Promise. The reply
   //     from the native side is expected to have two parameters: |data| and |error|.
   //     The optional wrapArgs, if supplied, will be used to custom the arguments,
   //     if not supplied, the original arguments will be used.
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
+  //     Set |experimental| to show warning message to console.
   //
-  // _addBinaryMethodWithPromise(name, promise, wrapArgs, wrapReturns?):
+  // _addBinaryMethodWithPromise(name, promise, wrapArgs, wrapReturns?, experimental?):
   //     The diff with _addMethodWithPromise is that this method will post
   //     binary message to native side. It requires that the method arguments must
   //     be customed to an ArrayBuffer by wrapArgs.
@@ -190,8 +192,9 @@ var Common = function() {
   //     wrapArgs will be used to custom the arguments to an ArrayBuffer,
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
+  //     Set |experimental| to show warning message to console.
   //
-  // _addMethodWithPromise2(name, promise, wrapArgs?, wrapReturns?):
+  // _addMethodWithPromise2(name, promise, wrapArgs?, wrapReturns?, experimental?):
   //     The diff with _addMethodWithPromise is that _addMethodWithPromise2's wrapArgs
   //     will return a Promise type, in which usually have async event to process.
   //     And _addMethodWithPromise's wrapArgs will return an array type value
@@ -203,8 +206,9 @@ var Common = function() {
   //     if not supplied, the original arguments will be used.
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
+  //     Set |experimental| to show warning message to console.
   //
-  // _addBinaryMethodWithPromise2(name, promise, wrapArgs, wrapReturns?):
+  // _addBinaryMethodWithPromise2(name, promise, wrapArgs, wrapReturns?, experimental?):
   //     The diff with _addMethodWithPromise2 is that this method will post
   //     binary message to native side. It requires that the method arguments must
   //     be customed to an ArrayBuffer by wrapArgs.
@@ -213,6 +217,7 @@ var Common = function() {
   //     wrapArgs will be used to custom the arguments to an ArrayBuffer,
   //     The optional wrapReturns, if supplied, will be used to custom |data| value,
   //     if not supplied, the original |data| value will be used.
+  //     Set |experimental| to show warning message to console.
   //
 
   var BindingObjectPrototype = function() {
@@ -233,9 +238,11 @@ var Common = function() {
       return name.indexOf('_') != 0;
     };
 
-    function addMethod(name, has_callback) {
+    function addMethod(name, has_callback, experimental) {
       Object.defineProperty(this, name, {
         value: function() {
+          if (typeof experimental !== undefined && experimental === true)
+            console.warn(name + ' is an experimental API.');
           var args = Array.prototype.slice.call(arguments);
 
           var callback;
@@ -288,9 +295,11 @@ var Common = function() {
       });
     };
 
-    function addMethodWithPromise(name, wrapArgs, wrapReturns, wrapErrorResult) {
+    function addMethodWithPromise(name, wrapArgs, wrapReturns, wrapErrorResult, experimental) {
       Object.defineProperty(this, name, {
         value: function() {
+          if (typeof experimental !== undefined && experimental === true)
+            console.warn(name + ' is an experimental API.');
           var args = Array.prototype.slice.call(arguments);
           if (wrapArgs) {
             args = wrapArgs(args);
@@ -306,9 +315,12 @@ var Common = function() {
       });
     };
 
-    function addBinaryMethodWithPromise(name, wrapArgs, wrapReturns, wrapErrorResult) {
+    function addBinaryMethodWithPromise(
+        name, wrapArgs, wrapReturns, wrapErrorResult, experimental) {
       Object.defineProperty(this, name, {
         value: function() {
+          if (typeof experimental !== undefined && experimental === true)
+            console.warn(name + ' is an experimental API.');
           var args = Array.prototype.slice.call(arguments);
           var arrayBuffer = wrapArgs(args);
           if (!arrayBuffer) {
@@ -322,9 +334,11 @@ var Common = function() {
       });
     };
 
-    function addMethodWithPromise2(name, wrapArgs, wrapReturns, wrapErrorResult) {
+    function addMethodWithPromise2(name, wrapArgs, wrapReturns, wrapErrorResult, experimental) {
       Object.defineProperty(this, name, {
         value: function() {
+          if (typeof experimental !== undefined && experimental === true)
+            console.warn(name + ' is an experimental API.');
           var self = this;
           var args = Array.prototype.slice.call(arguments);
           if (wrapArgs) {
@@ -342,9 +356,12 @@ var Common = function() {
       });
     };
 
-    function addBinaryMethodWithPromise2(name, wrapArgs, wrapReturns, wrapErrorResult) {
+    function addBinaryMethodWithPromise2(
+        name, wrapArgs, wrapReturns, wrapErrorResult, experimental) {
       Object.defineProperty(this, name, {
         value: function() {
+          if (typeof experimental !== undefined && experimental === true)
+            console.warn('This is an experimental API.');
           var self = this;
           var args = Array.prototype.slice.call(arguments);
           return wrapArgs(args).then(function(arrayBuffer) {
