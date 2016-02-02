@@ -182,7 +182,6 @@ def do_py_lint(changeset):
       output = GetCommandOutput(pylint_cmd + [py_name]).strip()
       if len(output) > 0:
         print output
-      else:
         error_count += 1;
     except Exception, e:
       if not _has_import_error and \
