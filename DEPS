@@ -6,30 +6,24 @@ use_relative_paths = True
 
 deps = {
   'buildtools':
-  Var('chromium_git') + '/chromium/buildtools.git' + '@' + '3b302fef93f7cc58d9b8168466905237484b2772',
-
-  'testing/gmock':
-  Var('chromium_git') + '/external/googlemock.git' + '@' + '29763965ab52f24565299976b936d1265cb6a271',
-
-  'testing/gtest':
-  Var('chromium_git') + '/external/googletest.git' + '@' + 'be1868139ffe0ccd0e8e3b37292b84c821d9c8ad',
-
-  'third_party/icu':
-  Var('chromium_git') + '/chromium/deps/icu.git' + '@' +'e4c31439828d356525b71ef81a6d61ea50d7d673',
+    Var('chromium_git') + '/chromium/buildtools.git' + '@' + '3b302fef93f7cc58d9b8168466905237484b2772',
 
   'tools/gyp':
-  Var('chromium_git') + '/external/gyp.git' + '@' + '2889664b9fa88cce175c5c7cdf207d28420a7412',
-
-  'third_party/colorama/src':
-  Var('chromium_git') + '/external/colorama.git' + '@' + '799604a1041e9b3bc5d2789ecbd7e8db2e18e6b8',
+    Var('chromium_git') + '/external/gyp.git' + '@' + '2889664b9fa88cce175c5c7cdf207d28420a7412',
 }
 
 deps_os = {
-  'android':
-  {
+  'android': {
     'third_party/jsr-305/src':
-    Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
-  }
+      Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
+  },
+  'win': {
+    'testing/gtest':
+      Var('chromium_git') + '/external/googletest.git' + '@' + 'be1868139ffe0ccd0e8e3b37292b84c821d9c8ad',
+
+    'third_party/icu':
+      Var('chromium_git') + '/chromium/deps/icu.git' + '@' +'e4c31439828d356525b71ef81a6d61ea50d7d673',
+  },
 }
 
 hooks = [
