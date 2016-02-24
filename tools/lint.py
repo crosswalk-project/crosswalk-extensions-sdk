@@ -20,6 +20,7 @@ from optparse import OptionParser, BadOptionError
 
 PYTHON_EXTS = ['.py']
 JS_EXTS = ['.js']
+DEFAULT_IGNORE_FILE = '.lintignore'
 
 
 class PassThroughOptionParser(OptionParser):
@@ -86,7 +87,7 @@ def get_tracking_remote():
 
 
 # return pyfiles, others
-def get_change_file_list(base):
+def get_change_file_list(base, ignore_array):
   diff = [GitExe(), 'diff', '--name-only', base]
   output = GetCommandOutput(diff)
   changes = [line.strip() for line in output.strip().split('\n')]
@@ -96,6 +97,9 @@ def get_change_file_list(base):
   common_regex = re.compile('common')
   # pylint: disable=W0612
   for change in changes:
+    if change in ignore_array:
+      print "Linting for %s ignored!" % change
+      continue
     root, ext = os.path.splitext(change)
     if common_regex.match(os.path.dirname(change)):
       print 'Skip common dir'
@@ -253,10 +257,40 @@ def do_js_lint(changeset):
   return error_count
 
 
-def do_lint(base, args):
+def get_all_files(dir):
+  files = []
+  for name in os.listdir(dir):
+    path = os.path.join(dir, name)
+    if os.path.isfile(path):
+      files.append(path)
+    else:
+      files.extend(get_all_files(path))
+  return files
+
+
+def get_ignore_list(ignore_file):
+  if not os.path.exists(ignore_file):
+    return []
+
+  ignore_array = []
+  lines = [line.rstrip('\n') for line in open(ignore_file)]
+  for l in lines:
+    if not os.path.exists(l):
+      continue
+    if os.path.isdir(l):
+      ignore_array.extend(get_all_files(l))
+      continue
+    ignore_array.append(l)
+  return ignore_array
+
+
+def do_lint(base, ignore_file, args):
   if base is None:
     base = get_tracking_remote()
-  changes_py, changes_js, changes_others = get_change_file_list(base)
+
+  changes_py, changes_js, changes_others = \
+      get_change_file_list(base, get_ignore_list(ignore_file))
+
   total_erros = 0
   total_erros += do_cpp_lint(changes_others, args)
   total_erros += do_py_lint(changes_py)
@@ -275,10 +309,12 @@ def main():
            '  1. Active branch\'s tracking branch if exist\n' +
            '  2. HEAD if current repo is dirty\n' +
            '  3. HEAD~ elsewise')
+  option_parser.add_option(
+      '--ignore-file', default=DEFAULT_IGNORE_FILE,
+      help='Filename that specifies intentionally untracked files to ignore.')
 
   options, args = option_parser.parse_args()
-
-  sys.exit(do_lint(options.base, args))
+  sys.exit(do_lint(options.base, options.ignore_file, args))
 
 
 if __name__ == '__main__':
