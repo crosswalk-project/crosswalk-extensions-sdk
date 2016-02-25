@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright (c) 2016 Intel Corporation. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
 ''' This script is used to lint changeset before code checkin
     It get the changeset from the repo and base specified by
     command line arguments. And run cpplint over the changeset.
@@ -12,9 +16,25 @@ import re
 import sys
 
 from utils import GitExe, GetCommandOutput, TryAddDepotToolsToPythonPath
+from optparse import OptionParser, BadOptionError
 
 PYTHON_EXTS = ['.py']
 JS_EXTS = ['.js']
+
+
+class PassThroughOptionParser(OptionParser):
+  def _process_long_opt(self, rargs, values):
+    try:
+      OptionParser._process_long_opt(self, rargs, values)
+    except BadOptionError, err:
+      self.largs.append(err.opt_str)
+
+  def _process_short_opts(self, rargs, values):
+    try:
+      OptionParser._process_short_opts(self, rargs, values)
+    except BadOptionError, err:
+      self.largs.append(err.opt_str)
+
 
 def find_depot_tools_in_path():
   paths = os.getenv('PATH').split(os.path.pathsep)
@@ -23,8 +43,10 @@ def find_depot_tools_in_path():
       return path
   return None
 
+
 def repo_is_dirty():
   return GetCommandOutput([GitExe(), 'diff', 'HEAD']).strip() != ''
+
 
 def get_tracking_remote():
   branch = [GitExe(), 'branch', '-vv', '-a']
@@ -45,10 +67,9 @@ def get_tracking_remote():
       # verify that remotes/branch or branch is a real branch
       # There is still chance that developer named his commit
       # as [origin/branch], in this case
-      exists = [\
-          r_branch for r_branch in branches \
-              if r_branch.strip().startswith('remotes/'+remote) or \
-                 r_branch.strip().startswith(remote)]
+      exists = [r_branch for r_branch in branches
+                if r_branch.strip().startswith('remotes/'+remote) or
+                r_branch.strip().startswith(remote)]
       if len(exists) == 0:
         remote = ''
     else:
@@ -62,6 +83,7 @@ def get_tracking_remote():
   print 'Base is not specified, '\
         'will use %s as comparasion base for linting' % remote
   return remote
+
 
 # return pyfiles, others
 def get_change_file_list(base):
@@ -86,6 +108,7 @@ def get_change_file_list(base):
       others.append(change)
   return pyfiles, jsfiles, others
 
+
 def do_cpp_lint(changeset, args):
   # Try to import cpplint from depot_tools first
   try:
@@ -98,11 +121,12 @@ def do_cpp_lint(changeset, args):
     import cpplint_chromium
     import gcl
   except ImportError:
-    sys.stderr.write("Can't find cpplint, please add your depot_tools "\
+    sys.stderr.write("Can't find cpplint, please add your depot_tools "
                      "to PATH or PYTHONPATH\n")
     raise
 
   origin_error = cpplint.Error
+
   def MyError(filename, linenum, category, confidence, message):
     # Skip no header guard  error for MSVC generated files.
     if (filename.endswith('resource.h')):
@@ -111,7 +135,7 @@ def do_cpp_lint(changeset, args):
     # Skip no header guard  error for ipc messages definition,
     # because they will be included multiple times for different macros.
     elif (filename.endswith('messages.h') and linenum == 0 and
-        category == 'build/header_guard'):
+          category == 'build/header_guard'):
       sys.stdout.write('Ignored Error:\n  %s(%s):  %s  [%s] [%d]\n' % (
           filename, linenum, message, category, confidence))
     else:
@@ -119,6 +143,7 @@ def do_cpp_lint(changeset, args):
   cpplint.Error = MyError
 
   origin_FileInfo = cpplint.FileInfo
+
   class MyFileInfo(origin_FileInfo):
     def RepositoryName(self):
       ''' Origin FileInfo find the first .git and take it as project root,
@@ -162,6 +187,7 @@ def do_cpp_lint(changeset, args):
   print "cpplint errors %d\n" % cpplint_state.error_count
   return cpplint_state.error_count
 
+
 def do_py_lint(changeset):
   print '_____ do python lint'
   if sys.platform.startswith('win'):
@@ -169,9 +195,9 @@ def do_py_lint(changeset):
   else:
     pylint_cmd = ['pylint']
   _has_import_error = False
-  error_count = 0;
+  error_count = 0
   for pyfile in changeset:
-    if os.path.exists(pyfile) != True:
+    if not os.path.exists(pyfile):
       print "Skipping file %s: File doesn't exist." % pyfile
       continue
     py_dir, py_name = os.path.split(os.path.abspath(pyfile))
@@ -182,18 +208,19 @@ def do_py_lint(changeset):
       output = GetCommandOutput(pylint_cmd + [py_name]).strip()
       if len(output) > 0:
         print output
-        error_count += 1;
+        error_count += 1
     except Exception, e:
-      if not _has_import_error and \
-          'F0401:' in [error[:6] for error in str(e).splitlines()]:
-        _has_import_error = True
+      if not _has_import_error:
+        if 'F0401:' in [error[:6] for error in str(e).splitlines()]:
+          _has_import_error = True
       print e
-      error_count += 1;
+      error_count += 1
     os.chdir(previous_cwd)
   if _has_import_error:
     print 'You have error for python importing, please check your PYTHONPATH'
   print "pylint errors %d\n" % error_count
   return error_count
+
 
 def do_js_lint(changeset):
   print '\n_____ do JavaScript lint'
@@ -201,9 +228,9 @@ def do_js_lint(changeset):
     jslint_cmd = ['gjslint.exe']
   else:
     jslint_cmd = ['gjslint']
-  error_count = 0;
+  error_count = 0
   for jsfile in changeset:
-    if os.path.exists(jsfile) != True:
+    if not os.path.exists(jsfile):
       print "Skipping file %s: File doesn't exist." % jsfile
       continue
     args = ['--strict', '--nojsdoc', '--max_line_length', '100', '--unix_mode']
@@ -217,43 +244,32 @@ def do_js_lint(changeset):
       if len(output) > 0:
         print output
       else:
-        error_count += 1;
+        error_count += 1
     except Exception, e:
       print e
-      error_count += 1;
+      error_count += 1
     os.chdir(previous_cwd)
   print "jslint errors %d\n" % error_count
   return error_count
 
+
 def do_lint(base, args):
-  if base == None:
+  if base is None:
     base = get_tracking_remote()
   changes_py, changes_js, changes_others = get_change_file_list(base)
-  total_erros = 0;
+  total_erros = 0
   total_erros += do_cpp_lint(changes_others, args)
   total_erros += do_py_lint(changes_py)
   total_erros += do_js_lint(changes_js)
   print "The total errors found: %d\n" % total_erros
   return total_erros
 
-from optparse import OptionParser, BadOptionError
-class PassThroughOptionParser(OptionParser):
-  def _process_long_opt(self, rargs, values):
-    try:
-      OptionParser._process_long_opt(self, rargs, values)
-    except BadOptionError, err:
-      self.largs.append(err.opt_str)
-
-  def _process_short_opts(self, rargs, values):
-    try:
-      OptionParser._process_short_opts(self, rargs, values)
-    except BadOptionError, err:
-      self.largs.append(err.opt_str)
 
 def main():
   option_parser = PassThroughOptionParser()
 
-  option_parser.add_option('--base', default=None,
+  option_parser.add_option(
+      '--base', default=None,
       help='The base point to get change set. If not specified,' +
            ' it will choose:\r\n' +
            '  1. Active branch\'s tracking branch if exist\n' +
@@ -261,8 +277,9 @@ def main():
            '  3. HEAD~ elsewise')
 
   options, args = option_parser.parse_args()
-  
+
   sys.exit(do_lint(options.base, args))
+
 
 if __name__ == '__main__':
   main()
