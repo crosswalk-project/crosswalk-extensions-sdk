@@ -260,7 +260,9 @@ def do_js_lint(changeset):
 def get_all_files(dir):
   files = []
   for name in os.listdir(dir):
-    path = os.path.join(dir, name)
+    # Posix path seperator '/' is used in .lintignore and git diff --name-only
+    # So os.path.join is not suitable here
+    path = dir + '/' + name
     if os.path.isfile(path):
       files.append(path)
     else:
