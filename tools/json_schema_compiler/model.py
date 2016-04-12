@@ -423,6 +423,9 @@ class EnumValue(object):
   def CamelName(self):
     return CamelName(self.name)
 
+  def DashDelimitedName(self):
+    return DashDelimitedName(self.name)
+
 class _Enum(object):
   """Superclass for enum types with a "name" field, setting up repr/eq/ne.
   Enums need to do this so that equality/non-equality work over pickling.
@@ -510,6 +513,19 @@ def CamelName(snake):
     else:
       camel.append(piece.capitalize())
   return ''.join(camel)
+
+@memoize
+def DashDelimitedName(snake):
+  ''' Converts a snake_cased_string to a dash-delimited-string. '''
+  pieces = snake.split('_')
+  dash_delimited_name = []
+  for i, piece in enumerate(pieces):
+    if i == 0:
+      dash_delimited_name.append(piece)
+    else:
+      dash_delimited_name.append('-')
+      dash_delimited_name.append(piece);
+  return ''.join(dash_delimited_name)
 
 
 def _StripNamespace(name, namespace):
